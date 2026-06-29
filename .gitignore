@@ -1,0 +1,26 @@
+# python
+__pycache__/
+.venv/
+.pytest_cache/
+
+# environment
+.env
+
+# chroma database
+vectorstore/
+
+# uploaded documents
+documents/*.pdf
+!documents/.gitkeep
+
+# react
+frontend/node_modules/
+frontend/dist/
+
+# vscode
+.vscode/
+
+# operating system
+.DS_Store
+Thumbs.db
+

@@ -1,0 +1,119 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Inter, system-ui, sans-serif;
+    background: #f4f6fb;
+    color: #172033;
+}
+
+button {
+    border: none;
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    background: #2563eb;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+input,
+textarea {
+    width: 100%;
+    margin: 1rem 0;
+    padding: 0.9rem;
+    border: 1px solid #d7dce8;
+    border-radius: 10px;
+    font: inherit;
+}
+
+textarea {
+    min-height: 130px;
+    resize: vertical;
+}
+
+.app {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+}
+
+.hero {
+    margin-bottom: 2rem;
+}
+
+.eyebrow {
+    color: #2563eb;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.hero h1 {
+    margin: 0;
+    font-size: 3rem;
+}
+
+.subtitle {
+    max-width: 650px;
+    color: #5d6678;
+    font-size: 1.1rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.card {
+    background: white;
+    border-radius: 18px;
+    padding: 1.5rem;
+    box-shadow: 0 12px 30px rgba(20, 35, 70, 0.08);
+}
+
+.ask-card,
+.answer-card {
+    margin-top: 1.5rem;
+}
+
+.muted {
+    color: #6b7280;
+}
+
+.document-list,
+.source-list {
+    padding-left: 1.2rem;
+}
+
+.document-list li,
+.source-list li {
+    margin-bottom: 0.5rem;
+}
+
+.error {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: #fee2e2;
+    color: #991b1b;
+    font-weight: 600;
+}
+
+@media (max-width: 750px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero h1 {
+        font-size: 2.2rem;
+    }
+}
