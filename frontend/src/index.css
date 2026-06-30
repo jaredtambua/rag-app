@@ -1,15 +1,37 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
+    --text: #64748b;         /* subtitles, muted text */
+    --text-h: #1f2937;       /* headings */
+    --text-body: #374151;    /* normal paragraphs */
+
+  --page-bg: linear-gradient(
+    180deg,
+    #ffffff,
+    #d8e9ff
+  );
+
+  --card-bg: #ffffff;
+  --card-border: #d8dee8;
+
+  --hero-bg:
+    radial-gradient(circle at top left, rgba(13, 110, 253, 0.14), transparent 32%),
+    linear-gradient(135deg, #ffffff, #f4f8ff);
+
   --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
+  --accent: #0d6efd;
+  --accent-bg: rgba(13, 110, 253, 0.12);
+  --accent-border: rgba(13, 110, 253, 0.2);
+
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    0 4px 14px rgba(0, 0, 0, 0.14),
+    0 12px 32px rgba(0, 0, 0, 0.08);
+
+  --shadow-hover:
+    0 8px 22px rgba(0, 0, 0, 0.18),
+    0 18px 42px rgba(0, 0, 0, 0.12);
+
+  --hero-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.12),
+    0 14px 36px rgba(13, 110, 253, 0.10);
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -17,20 +39,14 @@
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
   color: var(--text);
-  background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
     --text-h: #f3f4f6;
@@ -48,21 +64,114 @@
   #social .button-icon {
     filter: invert(1) brightness(2);
   }
-}
+} */
 
 body {
     margin: 0;
-
     background:
-        radial-gradient(circle at 20% 10%, rgba(0,122,255,.05), transparent 40%),
-        radial-gradient(circle at 80% 90%, rgba(0,122,255,.04), transparent 45%),
-        #fafcff;
+        radial-gradient(circle at 20% 10%, rgba(0, 122, 255, 0.6), transparent 35%),
+        radial-gradient(circle at 80% 90%, rgba(255, 0, 100, 0.5), transparent 40%),
+        var(--page-bg);
+    color: var(--text);
+}
+
+body.dark-mode {
+    --text: #cbd5e1;
+    --text-h: #f8fafc;
+    --text-body: #e5e7eb;
+
+  --page-bg: #0f172a;
+
+  --card-bg: #1e293b;
+  --card-border: #334155;
+
+  --hero-bg:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 32%),
+    linear-gradient(135deg, #1e293b, #111827);
+
+  --code-bg: #111827;
+  --accent: #60a5fa;
+  --accent-bg: rgba(96, 165, 250, 0.16);
+  --accent-border: rgba(96, 165, 250, 0.28);
+
+  --shadow:
+    0 4px 18px rgba(0, 0, 0, 0.45);
+
+  --shadow-hover:
+    0 8px 24px rgba(0, 0, 0, 0.55);
+
+  --hero-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.45);
+}
+
+body.dark-mode .list-group-item,
+body.dark-mode .form-control {
+    background-color: var(--card-bg);
+    color: var(--text-h);
+    border-color: var(--card-border);
+}
+
+body.dark-mode .text-secondary {
+    color: var(--text) !important;
+}
+
+body.dark-mode .btn-outline-primary {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+
+/* Make the placeholder/example text readable in dark mode */
+body.dark-mode .form-control::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+/* Fix the file input text/background */
+body.dark-mode input[type="file"].form-control {
+    background-color: var(--card-bg);
+    color: var(--text-h);
+    border-color: var(--card-border);
+}
+
+/* Fix the "Choose Files" button inside the file input */
+body.dark-mode input[type="file"].form-control::file-selector-button {
+    background-color: #334155;
+    color: #f8fafc;
+    border-color: #475569;
+}
+
+/* Optional hover for Choose Files */
+body.dark-mode input[type="file"].form-control::file-selector-button:hover {
+    background-color: #475569;
+}
+
+body.dark-mode input[type="file"].form-control::file-selector-button:hover {
+    background-color: #0f172a;
+    color: #f8fafc;
+    border-color: #334155;
+}
+
+body.dark-mode input[type="file"].form-control:hover::file-selector-button {
+    background-color: #6f7b8d;
+    color: #f8fafc;
+}
+/* Make normal headings follow the theme */
+h1,
+h2 {
+    color: var(--text-h);
+}
+
+/* Make sure hero title follows the theme too */
+.hero-title {
+    color: var(--text-h);
 }
 
 #root {
   width: 1126px;
   max-width: 100%;
   margin: 0 auto;
+  padding: 1rem;
   text-align: center;
   /* border-inline: 1px solid var(--border); */
   min-height: 100svh;
@@ -116,10 +225,10 @@ code {
 }
 
 .card {
-    border: 1px solid #d8dee8 !important;
-    box-shadow:
-        0 4px 14px rgba(0, 0, 0, 0.14),
-        0 12px 32px rgba(0, 0, 0, 0.08) !important;
+    background: var(--card-bg) !important;
+    color: var(--text);
+    border: 1px solid var(--card-border) !important;
+    box-shadow: var(--shadow) !important;
     transition: transform .25s ease, box-shadow .25s ease;
 }
 
@@ -127,21 +236,15 @@ code {
 
 .card:hover {
     transform: translateY(-2px);
-    box-shadow:
-        0 8px 22px rgba(0, 0, 0, 0.18),
-        0 18px 42px rgba(0, 0, 0, 0.12) !important;
+    box-shadow: var(--shadow-hover) !important;
 }
 
 .hero-card {
     padding: 4rem 2rem;
     border-radius: 1.25rem;
-    border: 1px solid #d8dee8;
-    background:
-        radial-gradient(circle at top left, rgba(13, 110, 253, 0.14), transparent 32%),
-        linear-gradient(135deg, #ffffff, #f4f8ff);
-    box-shadow:
-        0 4px 14px rgba(0, 0, 0, 0.12),
-        0 14px 36px rgba(13, 110, 253, 0.10);
+    border: 1px solid var(--card-border);
+    background: var(--hero-bg);
+    box-shadow: var(--hero-shadow);
 }
 
 .hero-badge {
@@ -151,21 +254,40 @@ code {
     border-radius: 1.25rem;
     display: grid;
     place-items: center;
-    background: rgba(13, 110, 253, 0.12);
-    color: #0d6efd;
+    background: var(--accent-bg);
+    color: var(--accent);
     font-size: 2.5rem;
-    box-shadow: inset 0 0 0 1px rgba(13, 110, 253, 0.2);
+    box-shadow: inset 0 0 0 1px var(--accent-border);
 }
 
 .hero-title {
-    color: #1f2937;
-    font-weight: 625;
+    color: var(--text-h);
+    font-weight: 600;
     letter-spacing: -1.5px;
     margin: 0 0 1rem;
 }
 
 .hero-subtitle {
-    color: #64748b;
+    color: var(--text);
     font-size: 1.2rem;
 }
 
+
+.theme-toggle-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+
+.alert-danger {
+    border: 1px solid #f5c2c7;
+    background-color: #fff1f2;
+    color: #991b1b;
+}
+
+body.dark-mode .alert-danger {
+    border-color: #7f1d1d;
+    background-color: #450a0a;
+    color: #fecaca;
+}

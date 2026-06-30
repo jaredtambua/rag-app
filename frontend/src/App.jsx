@@ -17,10 +17,15 @@ function App() {
     const [isAsking, setIsAsking] = useState(false);
     const [error, setError] = useState("");
 	const [justUploaded, setJustUploaded] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
 
     useEffect(() => {
         loadDocuments();
     }, []);
+
+    useEffect(() => {
+        document.body.classList.toggle("dark-mode", isDarkMode);
+    }, [isDarkMode]);
 
     // console.log("hi");
 
@@ -141,6 +146,16 @@ function App() {
 
     return (
         <main className="app-container py-4">
+            <div className="theme-toggle-wrapper">
+                <button
+                    className="btn btn-outline-primary rounded-pill px-4 theme-toggle-button mb-3"
+                    onClick={() => setIsDarkMode(!isDarkMode)}
+                >
+                    <i className={`bi ${isDarkMode ? "bi-sun-fill" : "bi-moon-stars-fill"} me-2`}></i>
+                    {isDarkMode ? "Light mode" : "Dark mode"}
+                </button>
+            </div>
+            
             <section className="hero-card mb-5 text-center">
                 <div className="hero-badge mb-3">
                     <i className="bi bi-robot"></i>
