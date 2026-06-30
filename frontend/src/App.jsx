@@ -140,18 +140,19 @@ function App() {
     }
 
     return (
-        <main className="container py-5">
-            <section className="mb-5">
-                <span className="badge text-bg-primary mb-3">
-                    AI document search
-                </span>
+        <main className="app-container py-4">
+            <section className="hero-card mb-5 text-center">
+                <div className="hero-badge mb-3">
+                    <i className="bi bi-robot"></i>
+                </div>
 
-                <h1 className="display-5 fw-bold">
+                <h1 className="hero-title">
                     RAG Document Assistant
                 </h1>
 
-                <p className="lead text-secondary">
-                    Upload PDFs, search across your knowledge base, and receive cited answers.
+                <p className="hero-subtitle">
+                    <i className="bi bi-file-earmark-pdf me-2"></i>
+                    Upload PDFs, search your knowledge base, and receive cited answers.
                 </p>
             </section>
 

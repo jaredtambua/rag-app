@@ -5,9 +5,12 @@ function UploadCard({
     isUploading,
 }) {
     return (
-        <div className="card shadow-sm h-100">
+        <div className="card shadow-sm border-0 rounded-4 h-100">
             <div className="card-body">
-                <h2 className="h4 card-title">Upload document</h2>
+                <h2 className="h4 card-title mb-3">
+                    <i className="bi bi-cloud-arrow-up-fill text-primary me-2"></i>
+                    Upload document
+                </h2>
 
                 <p className="text-secondary">
                     Add a PDF to your searchable knowledge base.
@@ -25,10 +28,11 @@ function UploadCard({
                 />
 
                 <button
-                    className="btn btn-primary"
+                    className="btn btn-primary rounded-pill px-4"
                     onClick={uploadDocument}
                     disabled={isUploading}
                 >
+                    <i className="bi bi-upload me-2"></i>
                     {isUploading ? "Uploading..." : "Upload PDF"}
                 </button>
             </div>
@@ -37,3 +41,4 @@ function UploadCard({
 }
 
 export default UploadCard;
+
