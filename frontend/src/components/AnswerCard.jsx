@@ -26,14 +26,23 @@ function AnswerCard({ answer, sources }) {
                             Sources
                         </h3>
 
-                        <ul className="list-group list-group-flush">
+                        <div className="d-flex flex-column gap-3">
                             {sources.map((source, index) => (
-                                <li className="list-group-item px-0" key={index}>
-                                    <i className="bi bi-file-earmark-text text-primary me-2"></i>
-                                    {source.source}, page {source.page}, chunk {source.chunk}
-                                </li>
+                                <div
+                                    key={index}
+                                    className="border rounded-3 p-3 bg-light"
+                                >
+                                    <div className="fw-semibold mb-2">
+                                        <i className="bi bi-file-earmark-text text-primary me-2"></i>
+                                        {source.source} · Page {source.page}
+                                    </div>
+
+                                    <blockquote className="mb-0 fst-italic">
+                                        "{source.quote}"
+                                    </blockquote>
+                                </div>
                             ))}
-                        </ul>
+                        </div>
                     </>
                 )}
             </div>

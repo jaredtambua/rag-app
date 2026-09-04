@@ -85,10 +85,13 @@ def remove_deleted_documents_from_chroma():
 
 
 # retrieve relevant chunks
-def retrieve_chunks(question, top_k=TOP_K):
+def retrieve_chunks(question, limit=20):
     question_embedding = embed_text(question)
 
-    results = collection.query(query_embeddings=[question_embedding], n_results=top_k)
+    results = collection.query(
+        query_embeddings=[question_embedding],
+        n_results=limit,
+    )
 
     retrieved = []
 
@@ -106,3 +109,60 @@ def retrieve_chunks(question, top_k=TOP_K):
         retrieved.append((distance, record))
 
     return retrieved
+
+
+# retrieve one chunk by source + chunk number
+def get_chunk_by_source_and_number(source, chunk_number):
+    results = collection.get(
+        where={
+            "$and": [
+                {"source": {"$eq": source}},
+                {"chunk_number": {"$eq": chunk_number}},
+            ]
+        }
+    )
+
+    if not results["ids"]:
+        return None
+
+    return {
+        "id": results["ids"][0],
+        "text": results["documents"][0],
+        "source": results["metadatas"][0]["source"],
+        "page": results["metadatas"][0]["page"],
+        "chunk_number": results["metadatas"][0]["chunk_number"],
+    }
+
+
+# expand selected chunks with neighboring chunks
+def expand_with_neighbor_chunks(results, window=1):
+    expanded = []
+    seen = set()
+
+    for distance, record in results:
+        source = record["source"]
+        chunk_number = record["chunk_number"]
+
+        for neighbor_chunk_number in range(
+            chunk_number - window,
+            chunk_number + window + 1,
+        ):
+            if neighbor_chunk_number < 1:
+                continue
+
+            key = (source, neighbor_chunk_number)
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+
+            neighbor_record = get_chunk_by_source_and_number(
+                source,
+                neighbor_chunk_number,
+            )
+
+            if neighbor_record:
+                expanded.append((distance, neighbor_record))
+
+    return expanded
