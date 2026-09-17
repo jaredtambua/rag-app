@@ -1,6 +1,6 @@
 import ReactMarkdown from "react-markdown";
 
-function AnswerCard({ answer, sources }) {
+function AnswerCard({ answer, citations }) {
     if (!answer) {
         return null;
     }
@@ -19,7 +19,7 @@ function AnswerCard({ answer, sources }) {
                     </ReactMarkdown>
                 </div>
 
-                {sources.length > 0 && (
+                {citations.length > 0 && (
                     <>
                         <h3 className="h5 mt-4">
                             <i className="bi bi-link-45deg me-2"></i>
@@ -27,18 +27,18 @@ function AnswerCard({ answer, sources }) {
                         </h3>
 
                         <div className="d-flex flex-column gap-3">
-                            {sources.map((source, index) => (
+                            {citations.map((citation, index) => (
                                 <div
                                     key={index}
                                     className="border rounded-3 p-3 bg-light"
                                 >
                                     <div className="fw-semibold mb-2">
                                         <i className="bi bi-file-earmark-text text-primary me-2"></i>
-                                        {source.source} · Page {source.page}
+                                        {citation.source} · Page {citation.page}
                                     </div>
 
                                     <blockquote className="mb-0 fst-italic">
-                                        "{source.quote}"
+                                        "{citation.quote}"
                                     </blockquote>
                                 </div>
                             ))}

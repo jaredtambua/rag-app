@@ -1,6 +1,6 @@
 from clients import collection
 
-from config import DOCUMENTS_DIR, TOP_K
+from config import DOCUMENTS_DIR
 
 from document_processing import (
     build_chunk_records,
@@ -26,6 +26,7 @@ def add_chunks_to_chroma(chunk_records, file_hash):
                     "source": record["source"],
                     "page": record["page"],
                     "chunk_number": record["chunk_number"],
+                    "chunk_index": record["chunk_index"],
                     "file_hash": file_hash,
                 }
             ],
@@ -88,23 +89,24 @@ def remove_deleted_documents_from_chroma():
 def retrieve_chunks(question, limit=20):
     question_embedding = embed_text(question)
 
-    results = collection.query(
+    chroma_results = collection.query(
         query_embeddings=[question_embedding],
         n_results=limit,
     )
 
     retrieved = []
 
-    for i in range(len(results["ids"][0])):
+    for i in range(len(chroma_results["ids"][0])):
         record = {
-            "id": results["ids"][0][i],
-            "text": results["documents"][0][i],
-            "source": results["metadatas"][0][i]["source"],
-            "page": results["metadatas"][0][i]["page"],
-            "chunk_number": results["metadatas"][0][i]["chunk_number"],
+            "id": chroma_results["ids"][0][i],
+            "text": chroma_results["documents"][0][i],
+            "source": chroma_results["metadatas"][0][i]["source"],
+            "page": chroma_results["metadatas"][0][i]["page"],
+            "chunk_number": chroma_results["metadatas"][0][i]["chunk_number"],
+            "chunk_index": chroma_results["metadatas"][0][i]["chunk_index"],
         }
 
-        distance = results["distances"][0][i]
+        distance = chroma_results["distances"][0][i]
 
         retrieved.append((distance, record))
 
@@ -112,12 +114,12 @@ def retrieve_chunks(question, limit=20):
 
 
 # retrieve one chunk by source + chunk number
-def get_chunk_by_source_and_number(source, chunk_number):
+def get_chunk_by_source_and_index(source, chunk_index):
     results = collection.get(
         where={
             "$and": [
                 {"source": {"$eq": source}},
-                {"chunk_number": {"$eq": chunk_number}},
+                {"chunk_index": {"$eq": chunk_index}},
             ]
         }
     )
@@ -131,38 +133,5 @@ def get_chunk_by_source_and_number(source, chunk_number):
         "source": results["metadatas"][0]["source"],
         "page": results["metadatas"][0]["page"],
         "chunk_number": results["metadatas"][0]["chunk_number"],
+        "chunk_index": results["metadatas"][0]["chunk_index"],
     }
-
-
-# expand selected chunks with neighboring chunks
-def expand_with_neighbor_chunks(results, window=1):
-    expanded = []
-    seen = set()
-
-    for distance, record in results:
-        source = record["source"]
-        chunk_number = record["chunk_number"]
-
-        for neighbor_chunk_number in range(
-            chunk_number - window,
-            chunk_number + window + 1,
-        ):
-            if neighbor_chunk_number < 1:
-                continue
-
-            key = (source, neighbor_chunk_number)
-
-            if key in seen:
-                continue
-
-            seen.add(key)
-
-            neighbor_record = get_chunk_by_source_and_number(
-                source,
-                neighbor_chunk_number,
-            )
-
-            if neighbor_record:
-                expanded.append((distance, neighbor_record))
-
-    return expanded

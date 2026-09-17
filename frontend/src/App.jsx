@@ -12,7 +12,7 @@ function App() {
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [question, setQuestion] = useState("");
     const [answer, setAnswer] = useState("");
-    const [sources, setSources] = useState([]);
+    const [citations, setCitations] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
     const [isAsking, setIsAsking] = useState(false);
     const [error, setError] = useState("");
@@ -106,23 +106,35 @@ function App() {
 
         setError("");
         setAnswer("");
-        setSources([]);
+        setCitations([]);
         setIsAsking(true);
 
-        const response = await fetch(`${API_URL}/ask`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ question }),
-        });
+        try {
+            const response = await fetch(`${API_URL}/ask`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ question }),
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        setAnswer(data.answer);
-        setSources(data.sources || []);
-        setIsAsking(false);
+            if (!response.ok) {
+                setError(data.detail || "Could not answer question.");
+                return;
+            }
 
+            setAnswer(data.answer);
+            setCitations(data.citations || []);
+
+        } catch (error) {
+            console.error("Ask question error:", error);
+            setError("Could not answer question.");
+
+        } finally {
+            setIsAsking(false);
+        }
     }
 
     async function deleteDocument(filename) {
@@ -228,7 +240,7 @@ function App() {
 
             <AnswerCard
                 answer={answer}
-                sources={sources}
+                citations={citations}
             />
         </main>
     );

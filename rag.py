@@ -2,29 +2,56 @@ import json
 
 from clients import client
 from config import CHAT_MODEL
+from models import ContextBlock
 
 
-def build_context(results):
+def build_context(context_blocks: list[ContextBlock]) -> str:
+    """
+    Convert structured ContextBlock objects into text
+    that can be supplied to the LLM.
+    """
     context_parts = []
 
-    for index, (score, record) in enumerate(results, start=1):
+    for index, block in enumerate(context_blocks, start=1):
+
+        # Make page information human-readable.
+        if block.start_page == block.end_page:
+            page_label = f"Page: {block.start_page}"
+        else:
+            page_label = f"Pages: {block.start_page}-{block.end_page}"
+
         context_parts.append(
-            f"[Context {index}]\n"
-            f"Source: {record['source']}\n"
-            f"Page: {record['page']}\n"
-            f"Text:\n{record['text']}"
+            f"[Evidence {index}]\n"
+            f"Source: {block.source}\n"
+            f"{page_label}\n"
+            f"Text:\n{block.text}"
         )
 
     return "\n\n---\n\n".join(context_parts)
 
 
-def generate_answer(question, results):
-    context = build_context(results)
+def generate_answer(
+    question: str,
+    context_blocks: list[ContextBlock],
+):
+    """
+    Generate an answer using retrieved evidence.
+    """
+
+    # If retrieval found nothing useful, don't ask the LLM
+    # to answer from its own general knowledge.
+    if not context_blocks:
+        return {
+            "answer": "I could not find this in the uploaded documents.",
+            "citations": [],
+        }
+
+    context = build_context(context_blocks)
 
     prompt = f"""
 You are a helpful document assistant.
 
-Answer the user's question using only the provided context.
+Answer the user's question using only the provided evidence.
 
 Return ONLY valid JSON in this exact structure:
 
@@ -34,27 +61,27 @@ Return ONLY valid JSON in this exact structure:
     {{
       "source": "filename.pdf",
       "page": 1,
-      "quote": "Exact sentence copied from the context."
+      "quote": "Exact sentence copied from the evidence."
     }}
   ]
 }}
 
 Rules:
-- The answer must be based only on the context.
-- Each citation quote must be copied exactly from the context.
+- The answer must be based only on the provided evidence.
+- Each citation quote must be copied exactly from the evidence.
 - Each quote should be one sentence where possible.
 - Do not mention chunk numbers.
 - Do not invent sources, pages, or quotes.
 - Include every citation necessary to support your answer.
-- Do not artifically limit the number of citations.
-- If different parts of your answer are supported by different sections of the documents, include a citation for each supporting quote.
-- If the answer is not in the context, return:
+- Do not artificially limit the number of citations.
+- If different parts of your answer are supported by different evidence, include a citation for each supporting quote.
+- If the answer is not supported by the evidence, return:
   {{
     "answer": "I could not find this in the uploaded documents.",
     "citations": []
   }}
 
-Context:
+Evidence:
 {context}
 
 Question:
@@ -63,19 +90,28 @@ Question:
 
     response = client.chat.completions.create(
         model=CHAT_MODEL,
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
         temperature=0,
     )
 
     content = response.choices[0].message.content.strip()
 
+    # Occasionally models wrap JSON in Markdown code fences.
+    # Remove those before attempting to parse the JSON.
     if content.startswith("```json"):
         content = content.removeprefix("```json").removesuffix("```").strip()
+
     elif content.startswith("```"):
         content = content.removeprefix("```").removesuffix("```").strip()
 
     try:
         return json.loads(content)
+
     except json.JSONDecodeError:
         return {
             "answer": content,

@@ -3,11 +3,13 @@ from typing import List
 
 from rag import generate_answer
 from vector_store import (
-    retrieve_chunks,
     index_document,
     remove_deleted_documents_from_chroma,
-    expand_with_neighbor_chunks,
 )
+
+from retrieval import retrieve_context
+from rag import generate_answer
+
 from models import QuestionRequest
 
 from pathlib import Path
@@ -27,90 +29,21 @@ app.add_middleware(
 )
 
 
-def select_relevant_chunks(
-    results,
-    max_chunks=8,
-    max_distance=0.8,
-    fallback_chunks=3,
-):
-    selected = []
-
-    for distance, record in results:
-        if distance <= max_distance:
-            selected.append((distance, record))
-
-        if len(selected) >= max_chunks:
-            break
-
-    if selected:
-        return selected
-
-    return results[:fallback_chunks]
-
-
-# Add this helper function in api.py, near select_relevant_chunks
-
-
-def limit_context_size(results, max_characters=12000):
-    limited = []
-    total_characters = 0
-
-    for distance, record in results:
-        text_length = len(record["text"])
-
-        if total_characters + text_length > max_characters:
-            break
-
-        limited.append((distance, record))
-        total_characters += text_length
-
-    return limited
-
-
-def deduplicate_citations(citations):
-    seen = set()
-    unique = []
-
-    for citation in citations:
-        key = (
-            citation["source"],
-            citation["page"],
-            citation["quote"],
-        )
-
-        if key in seen:
-            continue
-
-        seen.add(key)
-        unique.append(citation)
-
-    return unique
-
-
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
 
 @app.post("/ask")
-def ask_question(request: QuestionRequest):
-    candidates = retrieve_chunks(request.question, limit=20)
+def ask(request: QuestionRequest):
+    context = retrieve_context(request.question)
 
-    selected_results = select_relevant_chunks(candidates)
+    response = generate_answer(
+        request.question,
+        context,
+    )
 
-    expanded_results = expand_with_neighbor_chunks(selected_results, window=1)
-
-    limited_results = limit_context_size(expanded_results)
-
-    response = generate_answer(request.question, limited_results)
-
-    citations = deduplicate_citations(response.get("citations", []))
-
-    return {
-        "question": request.question,
-        "answer": response.get("answer", ""),
-        "sources": citations,
-    }
+    return response
 
 
 @app.post("/upload")

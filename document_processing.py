@@ -102,6 +102,7 @@ def build_chunk_records(pdf_path):
     pages = extract_pdf_text(pdf_path)
 
     chunk_records = []
+    chunk_index = 0
 
     for page in pages:
         chunks = chunk_text(page["text"])
@@ -109,13 +110,16 @@ def build_chunk_records(pdf_path):
         for chunk_number, chunk in enumerate(chunks, start=1):
             chunk_records.append(
                 {
-                    "id": f"{source_name}-page-{page['page']}-chunk-{chunk_number}",
+                    "id": f"{source_name}-chunk-{chunk_index}",
                     "source": source_name,
                     "page": page["page"],
                     "chunk_number": chunk_number,
+                    "chunk_index": chunk_index,
                     "text": chunk,
                 }
             )
+
+            chunk_index += 1
 
     return chunk_records
 
