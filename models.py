@@ -5,11 +5,13 @@ class QuestionRequest(BaseModel):
     question: str
 
 
+class RetrievedChunk(BaseModel):
+    page: int
+    chunk_index: int
+    text: str
+
+
 class ContextBlock(BaseModel):
     source: str
-    start_page: int
-    end_page: int
-    start_chunk_index: int
-    end_chunk_index: int
-    text: str
+    chunks: list[RetrievedChunk]
     distance: float

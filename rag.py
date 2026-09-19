@@ -7,24 +7,23 @@ from models import ContextBlock
 
 def build_context(context_blocks: list[ContextBlock]) -> str:
     """
-    Convert structured ContextBlock objects into text
-    that can be supplied to the LLM.
+    Convert ContextBlocks into structured evidence for the LLM
+    while preserving the page associated with each chunk.
     """
     context_parts = []
 
-    for index, block in enumerate(context_blocks, start=1):
+    for block_index, block in enumerate(context_blocks, start=1):
+        chunk_parts = []
 
-        # Make page information human-readable.
-        if block.start_page == block.end_page:
-            page_label = f"Page: {block.start_page}"
-        else:
-            page_label = f"Pages: {block.start_page}-{block.end_page}"
+        for chunk in block.chunks:
+            chunk_parts.append(f"[Page {chunk.page}]\n" f"{chunk.text}")
+
+        block_text = "\n\n".join(chunk_parts)
 
         context_parts.append(
-            f"[Evidence {index}]\n"
-            f"Source: {block.source}\n"
-            f"{page_label}\n"
-            f"Text:\n{block.text}"
+            f"[Evidence Group {block_index}]\n"
+            f"Source: {block.source}\n\n"
+            f"{block_text}"
         )
 
     return "\n\n---\n\n".join(context_parts)

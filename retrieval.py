@@ -6,7 +6,7 @@ from config import (
     RETRIEVAL_CANDIDATES,
 )
 
-from models import ContextBlock
+from models import ContextBlock, RetrievedChunk
 
 from vector_store import (
     get_chunk_by_source_and_index,
@@ -76,25 +76,30 @@ def expand_with_neighbor_chunks(results):
 
 def build_context_block(group):
     """
-    Convert one contiguous group of chunks into
-    a single coherent ContextBlock.
+    Group contiguous chunks while preserving each chunk's
+    individual text and provenance.
     """
     distances = [distance for distance, _ in group]
 
     records = [record for _, record in group]
 
+    chunks = [
+        RetrievedChunk(
+            page=record["page"],
+            chunk_index=record["chunk_index"],
+            text=record["text"],
+        )
+        for record in records
+    ]
+
     return ContextBlock(
         source=records[0]["source"],
-        start_page=records[0]["page"],
-        end_page=records[-1]["page"],
-        start_chunk_index=records[0]["chunk_index"],
-        end_chunk_index=records[-1]["chunk_index"],
-        text="\n\n".join(record["text"] for record in records),
+        chunks=chunks,
         distance=min(distances),
     )
 
 
-def merge_contiguous_chunks(results):
+def group_contiguous_chunks(results):
     """
     Combine neighboring chunks from the same document
     into coherent context blocks.
@@ -162,7 +167,7 @@ def limit_context_size(context_blocks):
     total_characters = 0
 
     for block in context_blocks:
-        block_size = len(block.text)
+        block_size = sum(len(chunk.text) for chunk in block.chunks)
 
         if total_characters + block_size > MAX_CONTEXT_CHARACTERS:
             continue
@@ -190,7 +195,7 @@ def retrieve_context(question: str) -> list[ContextBlock]:
 
     expanded = expand_with_neighbor_chunks(selected)
 
-    context_blocks = merge_contiguous_chunks(expanded)
+    context_blocks = group_contiguous_chunks(expanded)
 
     limited_context = limit_context_size(context_blocks)
 
