@@ -1,5 +1,4 @@
 from config import DOCUMENTS_DIR
-
 from display import print_results
 from rag import generate_answer
 from vector_store import (

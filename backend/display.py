@@ -1,6 +1,3 @@
-# display.py
-
-
 # print a summary of chunk creation
 def print_chunk_summary(chunk_records):
     print(f"\nTotal chunks created: {len(chunk_records)}")

@@ -46,24 +46,32 @@ def generate_answer(
 
     context = build_context(context_blocks)
 
+    print("\n--- CONTEXT SENT TO LLM ---")
+    print(context)
+    print("--- END CONTEXT ---\n")
+
     prompt = f"""
 You are a document assistant. Answer the user's question using only
 the evidence retrieved from the uploaded documents.
 
-Adapt your response to the question:
+Answer style:
+- Use British English spelling and conventions.
+- Adapt the length and structure of the response to the question.
 - For simple factual questions, answer directly and concisely.
 - For questions asking for an explanation, provide enough detail to
   clearly explain the relevant concepts.
 - For comparison questions, clearly explain the relevant similarities
   and differences.
-- For summary questions, synthesize the important information from the
+- For summary questions, synthesise the important information from the
   available evidence.
 - Use paragraphs, bullet points, or headings when they genuinely improve
   clarity.
 - Do not add unnecessary detail simply to make an answer longer.
 
-You may explain, summarize, and synthesize the evidence in your own words,
-but do not introduce factual claims that are not supported by the evidence.
+Grounding:
+- Base factual claims only on the provided evidence.
+- You may explain, summarise, and synthesise the evidence in your own words.
+- Do not introduce factual claims that are not supported by the evidence.
 
 Return ONLY valid JSON in this exact structure:
 
@@ -77,6 +85,7 @@ Return ONLY valid JSON in this exact structure:
     }}
   ]
 }}
+
 
 Citation rules:
 - Citations must support factual claims made in the answer.
