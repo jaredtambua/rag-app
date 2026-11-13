@@ -1,249 +1,52 @@
-import { useEffect, useState } from "react";
-import ErrorAlert from "./components/ErrorAlert";
-import UploadCard from "./components/UploadCard";
-import DocumentsCard from "./components/DocumentsCard";
-import AskCard from "./components/AskCard";
-import AnswerCard from "./components/AnswerCard";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Landing from "./landing/Landing.jsx";
+import Workspace from "./demo/Workspace.jsx";
+import { reducedMotion, useRoute } from "./routing.js";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const CURTAIN_MS = 420;
+const TITLES = {
+  landing: "Tessel: ask your documents anything",
+  demo: "Tessel demo: upload a PDF and ask a question",
+};
 
-function App() {
-    const [documents, setDocuments] = useState([]);
-    const [selectedFiles, setSelectedFiles] = useState([]);
-    const [question, setQuestion] = useState("");
-    const [answer, setAnswer] = useState("");
-    const [citations, setCitations] = useState([]);
-    const [isUploading, setIsUploading] = useState(false);
-    const [isAsking, setIsAsking] = useState(false);
-    const [error, setError] = useState("");
-	const [justUploaded, setJustUploaded] = useState(false);
-    const [isDarkMode, setIsDarkMode] = useState(false);
+export default function App() {
+  const route = useRoute();
+  const [curtain, setCurtain] = useState(false);
+  const timer = useRef(0);
 
-    useEffect(() => {
-        loadDocuments();
-    }, []);
+  useEffect(() => {
+    document.title = TITLES[route];
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [route]);
 
-    useEffect(() => {
-        document.body.classList.toggle("dark-mode", isDarkMode);
-    }, [isDarkMode]);
+  useEffect(() => () => clearTimeout(timer.current), []);
 
-    // console.log("hi");
+  /* a dark curtain fades in, the address changes underneath it, then it fades away */
+  const navigate = useCallback((hash) => {
+    clearTimeout(timer.current);
+    if (reducedMotion()) { window.location.hash = hash; return; }
+    setCurtain(true);
+    timer.current = setTimeout(() => {
+      window.location.hash = hash;
+      requestAnimationFrame(() => setCurtain(false));
+    }, CURTAIN_MS);
+  }, []);
 
-    async function loadDocuments() {
-        try {
-            const response = await fetch(`${API_URL}/documents`);
-            const data = await response.json();
+  /* Back/Forward during the fade wins: drop the pending jump and lift the curtain */
+  useEffect(() => {
+    const onHash = () => { clearTimeout(timer.current); setCurtain(false); };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
-            console.log("Loaded documents:", data);
-
-            setDocuments(data.documents || []);
-        } catch (error) {
-            console.error("Load documents error:", error);
-            setError("Could not load documents.");
-        }
-    }
-
-
-	async function uploadDocument() {
-		if (selectedFiles.length === 0) {
-			if (justUploaded) {
-				setError("Upload complete. Please select a new file.");
-			} else {
-				setError("Please choose at least one PDF first.");
-			}
-
-			return;
-		}
-
-		setError("");
-		setIsUploading(true);
-
-		try {
-			const formData = new FormData();
-
-			selectedFiles.forEach((file) => {
-				formData.append("files", file);
-			});
-
-			const response = await fetch(`${API_URL}/upload`, {
-				method: "POST",
-				body: formData,
-			});
-
-			const data = await response.json();
-
-			if (!response.ok) {
-				setError(data.detail || "Upload failed.");
-				return;
-			}
-
-			if (data.skipped?.length > 0) {
-				setError(
-					data.skipped
-						.map((item) => `${item.filename}: ${item.reason}`)
-						.join("\n")
-				);
-			}
-
-			setSelectedFiles([]);
-			setJustUploaded(true);
-			await loadDocuments();
-
-		} catch (error) {
-			console.error("Upload error:", error);
-			setError("Could not upload documents.");
-		} finally {
-			setIsUploading(false);
-		}
-	}
-	
-
-    async function askQuestion() {
-        if (!question.trim()) {
-            setError("Please enter a question.");
-            return;
-        }
-
-        setError("");
-        setAnswer("");
-        setCitations([]);
-        setIsAsking(true);
-
-        try {
-            const response = await fetch(`${API_URL}/ask`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ question }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                setError(data.detail || "Could not answer question.");
-                return;
-            }
-
-            setAnswer(data.answer);
-            setCitations(data.citations || []);
-
-        } catch (error) {
-            console.error("Ask question error:", error);
-            setError("Could not answer question.");
-
-        } finally {
-            setIsAsking(false);
-        }
-    }
-
-    async function deleteDocument(filename) {
-      
-        setError("");
-
-        const response = await fetch(
-            `${API_URL}/documents/${filename}`,
-            {
-                method: "DELETE",
-            }
-        );
-
-        if (!response.ok) {
-            setError("Failed to delete document.");
-            return;
-        }
-
-        await loadDocuments();
-    }
-
-    return (
-        <main className="app-container py-4">
-            <div className="theme-toggle-wrapper">
-                <button
-                    className="btn btn-outline-primary rounded-pill px-4 theme-toggle-button mb-3"
-                    onClick={() => setIsDarkMode(!isDarkMode)}
-                >
-                    <i className={`bi ${isDarkMode ? "bi-sun-fill" : "bi-moon-stars-fill"} me-2`}></i>
-                    {isDarkMode ? "Light mode" : "Dark mode"}
-                </button>
-            </div>
-            
-            <section className="hero-card mb-5 text-center">
-                <div className="hero-badge mb-3">
-                    <i className="bi bi-robot"></i>
-                </div>
-
-                <h1 className="hero-title">
-                    RAG Document Assistant
-                </h1>
-
-                <p className="hero-subtitle">
-                    <i className="bi bi-file-earmark-pdf me-2"></i>
-                    Upload PDFs, search your knowledge base, and receive cited answers.
-                </p>
-            </section>
-
-
-            <ErrorAlert error={error} />
-            {/* {error && (
-                <div className="alert alert-danger" role="alert">
-                    {error}
-                </div>
-            )} */}
-
-            <section className="row g-4 mb-4">
-                <div className="col-md-6">
-					<UploadCard
-						setSelectedFiles={setSelectedFiles}
-						setJustUploaded={setJustUploaded}
-						uploadDocument={uploadDocument}
-						isUploading={isUploading}
-					/>
-                </div>
-  
-                <div className="col-md-6">
-                    <DocumentsCard
-                        documents={documents}
-                        deleteDocument={deleteDocument}
-                    />
-                </div>
-            </section>
-
-            <AskCard
-                question={question}
-                setQuestion={setQuestion}
-                askQuestion={askQuestion}
-                isAsking={isAsking}
-            />
-            {/* <section className="card shadow-sm mb-4">
-                <div className="card-body">
-                    <h2 className="h4 card-title">Ask a question</h2>
-
-                    <textarea
-                        className="form-control mb-3"
-                        rows="5"
-                        value={question}
-                        onChange={(event) => setQuestion(event.target.value)}
-                        placeholder="Example: What accuracy did the classifier achieve?"
-                    />
-
-                    <button
-                        className="btn btn-success"
-                        onClick={askQuestion}
-                        disabled={isAsking}
-                    >
-                        {isAsking ? "Thinking..." : "Ask"}
-                    </button>
-                </div>
-            </section> */}
-
-
-            <AnswerCard
-                answer={answer}
-                citations={citations}
-            />
-        </main>
-    );
+  return (
+    <>
+      <div className="view" key={route}>
+        {route === "demo" ? <Workspace onNavigate={navigate} /> : <Landing onNavigate={navigate} />}
+      </div>
+      <div className="curtain" data-on={curtain} aria-hidden="true">
+        <svg width="44" height="40" viewBox="0 0 22 20"><path d="M11 1.5 20.5 18.5H1.5Z" fill="none" stroke="#8052ff" strokeWidth="1.5" strokeLinejoin="round" /></svg>
+      </div>
+    </>
+  );
 }
-
-export default App;

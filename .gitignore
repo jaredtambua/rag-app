@@ -31,3 +31,6 @@ Thumbs.db
 # runtime RAG data
 backend/vectorstore/
 
+
+# private design working material
+design/

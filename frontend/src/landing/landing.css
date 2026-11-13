@@ -1,0 +1,74 @@
+/* Landing page: the fixed canvas cloud and the scene words that fade over it. */
+.landing { font-weight: 200; font-size: var(--text-body); line-height: 1.5; }
+
+/* the track gives the page its scroll length: one screen per stop, three for the use-case slides */
+.track { position: relative; z-index: 0; }
+.spacer { height: var(--screen); }
+.spacer-3 { height: calc(var(--screen) * 3); }
+
+#ambient, #cloud { position: fixed; inset: 0; width: 100%; height: 100%; }
+#ambient { z-index: 0; pointer-events: none; }
+#cloud { z-index: 1; touch-action: pan-y; cursor: grab; }
+#cloud.grabbing { cursor: grabbing; }
+
+.h-lg { font-size: var(--text-h-lg); }
+.h-md { font-size: var(--text-h-md); }
+.lede { color: var(--mist); max-width: 480px; margin-top: var(--s4); }
+
+/* navigation */
+.top { position: fixed; top: 0; left: 0; right: 0; z-index: 10; }
+.nav { display: flex; align-items: center; justify-content: space-between; gap: var(--s4); padding: var(--s4) clamp(var(--s4), 5vw, 64px); }
+.nav-links { display: flex; gap: var(--s5); }
+.nav-links a { font-size: var(--text-small); font-weight: 600; letter-spacing: 0.025em; text-transform: uppercase; color: var(--ash); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+.nav-links a:hover, .nav-links a[aria-current="true"] { color: var(--white); }
+
+/* the words for each stop: fixed on screen, faded in and out by the layer hook */
+.scene-text { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0; visibility: hidden; padding: 0 clamp(var(--s4), 6vw, 96px); }
+.scene-text .copy, .scene-text .head, .scene-text .small, .scene-text .passage { position: absolute; }
+.scene-text.on a, .scene-text.on button, .scene-text.on p, .scene-text.on h1, .scene-text.on h2 { pointer-events: auto; }
+.scene-text .btn { margin-top: var(--s5); }
+
+.t0 .copy, .t7 .copy { top: 50%; left: clamp(var(--s4), 6vw, 96px); width: min(42vw, 560px); margin-top: -2vh; transform: translateY(-50%); }
+.t1 .head { left: clamp(var(--s4), 5vw, 80px); top: 14vh; width: 70vw; font-size: clamp(36px, 3.9vw, 64px); line-height: 1.05; }
+.t1 .small { right: clamp(var(--s4), 5vw, 80px); bottom: 9vh; width: min(26vw, 340px); margin: 0; text-align: right; }
+.t2 .head { left: 0; right: 0; top: 14vh; text-align: center; padding: 0 var(--s4); }
+.t2 .passage { left: 50%; top: 60%; width: min(26vw, 300px); transform: translate(-50%, -50%); text-align: center; }
+.tag { font-size: 12px; font-weight: 600; letter-spacing: 0.025em; text-transform: uppercase; color: var(--ash); margin-bottom: var(--s1); }
+.where { font-size: 16px; font-weight: 400; color: var(--saffron); margin-bottom: var(--s2); }
+.quote { font-size: 15px; color: var(--mist); }
+.t3 .copy { left: clamp(var(--s4), 6vw, 96px); bottom: 13vh; width: min(38vw, 520px); }
+.t6 .copy { left: 0; right: 0; bottom: calc(8vh + 56px); text-align: center; padding: 0 var(--s4); }
+.t6 .lede { margin-left: auto; margin-right: auto; max-width: 560px; }
+.dots { display: flex; margin: var(--s4) 0 0 -14px; }
+.dot { width: 44px; height: 44px; background: none; border: 0; cursor: pointer; display: grid; place-items: center; }
+.dot::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #3b3b3b; transition: background var(--t-fast), transform var(--t-fast); }
+.dot[aria-current="true"]::after { background: var(--iris); transform: scale(1.25); }
+
+/* previous / next */
+.section-controls { position: fixed; z-index: 11; bottom: max(18px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px; border: 1px solid #444; border-radius: var(--r-pill); background: #101010; white-space: nowrap; }
+.section-controls button { min-height: 44px; padding: 10px 16px; border: 1px solid #555; border-radius: var(--r-pill); background: #202020; color: var(--white); font: 600 14px var(--font); cursor: pointer; }
+.section-controls button:hover { border-color: var(--iris); background: #302247; }
+.section-controls button[aria-disabled="true"] { color: var(--ash); cursor: default; }
+.section-controls .position { min-width: 40px; text-align: center; color: var(--mist); font-size: 13px; font-weight: 400; }
+
+/* phones: the cloud sits in the top half and the words below it */
+@media (max-width: 760px) {
+  .nav-links { display: none; }
+  .nav { padding: var(--s3) var(--s4); }
+  .nav .btn { padding: 12px 16px; font-size: 12px; }
+  .scene-text { padding: 0; }
+  .scene-text .copy, .scene-text .head, .scene-text .small, .scene-text .passage { left: var(--s4); right: var(--s4); top: auto; bottom: calc(7vh + 64px); width: auto; margin: 0; transform: none; text-align: left; }
+  .t0 .copy, .t7 .copy { top: auto; bottom: calc(6vh + 64px); margin: 0; }
+  .t1 .head { bottom: calc(7vh + 190px); font-size: clamp(36px, 10vw, 56px); }
+  .t1 .small { bottom: calc(7vh + 64px); }
+  .t2 .head { top: auto; bottom: calc(8vh + 64px); text-align: left; padding: 0; }
+  .t2 .passage { top: 28%; bottom: auto; left: 50%; right: auto; width: 46vw; transform: translate(-50%, -50%); text-align: center; }
+  .t6 .copy { text-align: left; padding: 0; }
+  .t6 .lede { margin-left: 0; }
+  .lede { font-size: 16px; margin-top: var(--s3); }
+  .h-lg { font-size: clamp(40px, 11vw, 56px); }
+}
+@media (max-width: 400px) { .section-controls { gap: 8px; } .section-controls button { padding-inline: 12px; } }
+
+/* short screens: tighten the words so they never run into the cloud */
+@media (max-height: 640px) and (min-width: 761px) { .lede { margin-top: var(--s3); } .t0 .copy, .t7 .copy { margin-top: 0; } }
