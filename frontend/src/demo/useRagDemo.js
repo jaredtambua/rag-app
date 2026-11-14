@@ -60,6 +60,23 @@ async function problemFrom(response, fallback) {
   return detail;
 }
 
+function addTurn(items, turn) {
+  let list = [...items, turn];
+  let turns = list.filter((item) => item.kind === "turn").length;
+  while (turns > LIMITS.historyTurns) {
+    list = list.slice(list.findIndex((item) => item.kind === "turn") + 1);
+    turns -= 1;
+  }
+  while (list[0]?.kind === "note") list = list.slice(1);
+  return list;
+}
+
+/* one note per removal moment, and only when there is something earlier for it to refer to */
+function addRemovalNote(items, id) {
+  if (!items.some((item) => item.kind === "turn") || items[items.length - 1].kind === "note") return items;
+  return [...items, { id, kind: "note" }];
+}
+
 export function useRagDemo() {
   /* the list as the server last sent it, and when it arrived; time left is worked out from these */
   const [listing, setListing] = useState({ items: [], receivedAt: 0 });
@@ -69,9 +86,11 @@ export function useRagDemo() {
   const connectRun = useRef(0);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [question, setQuestion] = useState("");
-  /* the latest question and what came of it: { question, answer, citations, failedMessage } */
-  const [turn, setTurn] = useState(null);
-  const [pendingQuestion, setPendingQuestion] = useState("");
+  /* The conversation shown on screen, oldest first. Each answer is still independent: earlier turns are never sent to the server.
+     Items are turns ({ id, kind: "turn", question, status: pending | done | failed, answer, citations, message })
+     or notes ({ id, kind: "note" }) marking a moment a document was removed. Kept in memory only. */
+  const [thread, setThread] = useState([]);
+  const nextId = useRef(0);
   const seenIds = useRef(new Set());
   const [isUploading, setIsUploading] = useState(false);
   const [isAsking, setIsAsking] = useState(false);
@@ -149,12 +168,12 @@ export function useRagDemo() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* An answer that cites a document is dropped when any document is deleted or runs out of time. */
+  /* When a document is deleted or runs out of time the history stays, with a short note at that point. */
   useEffect(() => {
     const ids = new Set(documents.map((doc) => doc.id));
     const removed = [...seenIds.current].some((id) => !ids.has(id));
     seenIds.current = ids;
-    if (removed) setTurn(null);
+    if (removed) setThread((items) => addRemovalNote(items, ++nextId.current));
   }, [documents]);
 
   /* once a minute, refresh the time-left labels */
@@ -246,7 +265,49 @@ export function useRagDemo() {
     }
   }
 
-  async function askQuestion() {
+  /* Sends one question and records it in the thread. `source` is "box" (typed) or "retry" (Try again on a failed turn). */
+  async function ask(text, source, replaceId) {
+    const id = ++nextId.current;
+    setError("");
+    setNotice("");
+    if (source === "box") setQuestion("");
+    setThread((items) => addTurn(items.filter((item) => item.id !== replaceId), { id, kind: "turn", question: text, status: "pending", answer: "", citations: [], message: "" }));
+    setIsAsking(true);
+
+    const finish = (changes) => setThread((items) => items.map((item) => (item.id === id ? { ...item, ...changes } : item)));
+
+    try {
+      const response = await request("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: text }),
+      });
+
+      if (!response.ok) {
+        const message = await problemFrom(response, "Could not answer question.");
+        if (response.status >= 500) {
+          /* a fault on our side: the turn says so and offers Try again */
+          finish({ status: "failed", message });
+        } else {
+          /* a refusal (such as the hourly limit): the banner explains, the thread is left as it was and the question goes back in the box */
+          setThread((items) => items.filter((item) => item.id !== id));
+          setQuestion((current) => current || text);
+          setError(message);
+        }
+        return;
+      }
+
+      const data = await response.json();
+      finish({ status: "done", answer: data.answer, citations: data.citations || [] });
+    } catch (err) {
+      console.error("Ask question error:", err);
+      finish({ status: "failed", message: "Could not reach the demo server." });
+    } finally {
+      setIsAsking(false);
+    }
+  }
+
+  function askQuestion() {
     const trimmed = question.trim();
 
     if (!trimmed) {
@@ -257,39 +318,16 @@ export function useRagDemo() {
       setError(MESSAGES.questionTooLong);
       return;
     }
+    return ask(question, "box");
+  }
 
-    setError("");
-    setNotice("");
-    setPendingQuestion(question);
-    setIsAsking(true);
+  function retryTurn(id) {
+    const failed = thread.find((item) => item.id === id && item.status === "failed");
+    if (failed && !isAsking) ask(failed.question, "retry", id);
+  }
 
-    try {
-      const response = await request("/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
-      });
-
-      if (!response.ok) {
-        const message = await problemFrom(response, "Could not answer question.");
-        if (response.status >= 500) {
-          /* a fault on our side: the answer area says so and invites a retry */
-          setTurn({ question, answer: "", citations: [], failedMessage: message });
-        } else {
-          /* a refusal (such as the hourly limit): the banner explains and the previous answer stays */
-          setError(message);
-        }
-        return;
-      }
-
-      const data = await response.json();
-      setTurn({ question, answer: data.answer, citations: data.citations || [], failedMessage: "" });
-    } catch (err) {
-      console.error("Ask question error:", err);
-      setTurn({ question, answer: "", citations: [], failedMessage: "Could not reach the demo server." });
-    } finally {
-      setIsAsking(false);
-    }
+  function clearHistory() {
+    if (!isAsking) setThread([]);
   }
 
   async function deleteDocument(id) {
@@ -316,11 +354,7 @@ export function useRagDemo() {
     documents, documentsStatus, waking, retryConnect: connect,
     selectedFiles, chooseFiles, uploadDocument, isUploading,
     question, setQuestion, askQuestion, isAsking,
-    hasTurn: Boolean(turn) || isAsking,
-    askedQuestion: isAsking ? pendingQuestion : turn?.question || "",
-    answer: turn?.answer || "",
-    citations: turn?.citations || [],
-    failedMessage: turn?.failedMessage || "",
+    thread, retryTurn, clearHistory,
     error, setError, notice, setNotice,
     deleteDocument,
   };

@@ -97,22 +97,36 @@
 .chip:hover { border-color: var(--iris); color: var(--white); }
 
 /* the ask box */
-.composer { --ask-w: 108px; display: flex; align-items: center; gap: var(--s2); padding: 8px; background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 28px; }
+.composer { --ask-w: 88px; display: flex; align-items: center; gap: var(--s2); padding: 8px; background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 28px; }
 /* text is left-aligned and sits on the bar's middle line, level with the Ask button; the box grows with the text and the button stays centred beside it */
 .composer textarea { flex: 1; min-width: 0; min-height: 44px; resize: none; overflow-y: auto; scrollbar-width: none; font: inherit; font-size: 16px; line-height: 24px; color: var(--white); background: none; border: 0; padding: 10px var(--s3); max-height: 164px; text-align: left; -webkit-mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 10px), transparent); mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 10px), transparent); }
 .composer textarea:focus-visible { outline: none; }
 .composer:has(textarea:focus-visible) { outline: 2px solid var(--saffron); outline-offset: 3px; }
 .composer textarea::placeholder { color: var(--ash); }
 .composer textarea:disabled { cursor: not-allowed; }
-.composer .btn { flex: none; width: var(--ask-w); padding-left: 0; padding-right: 0; }
+/* a compact pill, centred in the bar at any height; the tap area is still 44px tall */
+.composer .btn { position: relative; flex: none; align-self: center; min-width: var(--ask-w); min-height: 34px; padding: 6px 16px; white-space: nowrap; font-size: 13px; gap: 8px; }
+.composer .btn::before { content: ""; position: absolute; inset: -5px 0; }
 .composer-wrap .hint { margin-top: var(--s2); padding: 0 27px; text-align: left; font-size: 13px; display: flex; justify-content: space-between; gap: var(--s2); }
 .composer-wrap .hint .counter { flex: none; font-variant-numeric: tabular-nums; }
 .composer-wrap .hint .counter.is-over, .composer-wrap .hint.is-alert .counter.is-over { color: var(--error); font-weight: 600; }
 
+/* the thread: question and answer pairs, oldest first */
+.thread-bar { flex: none; padding: 0 var(--s4); }
+.thread-bar-inner { max-width: var(--col-w); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: var(--s2); min-height: 36px; color: var(--ash); font-size: 13px; }
+.link-btn { min-height: 36px; padding: 0 var(--s1); border: 0; background: none; color: var(--ash); font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.link-btn:hover:not(:disabled) { color: var(--white); }
+.link-btn:disabled { opacity: .5; cursor: not-allowed; }
+.thread-list { display: grid; gap: var(--s6); align-content: start; }
+.thread-note { display: flex; align-items: center; gap: var(--s2); color: var(--ash); font-size: 13px; text-align: center; }
+.thread-note::before, .thread-note::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.thread-empty { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--s2); color: var(--mist); font-size: 15px; text-align: center; }
+
 /* a question and its answer */
-.turn { display: grid; gap: var(--s3); align-content: start; scroll-margin-top: var(--s4); }
-.asked { justify-self: end; max-width: 85%; padding: 12px 18px; background: var(--iris-deep); border: 1px solid var(--iris); border-radius: var(--r-card) var(--r-card) 6px var(--r-card); overflow-wrap: anywhere; scroll-margin-top: var(--s4); }
+.turn { display: grid; gap: var(--s3); align-content: start; scroll-margin-top: var(--s2); }
+.asked { justify-self: end; white-space: pre-wrap; max-width: 85%; padding: 12px 18px; background: var(--iris-deep); border: 1px solid var(--iris); border-radius: var(--r-card) var(--r-card) 6px var(--r-card); overflow-wrap: anywhere; scroll-margin-top: var(--s4); }
 .reply { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: var(--s4); min-width: 0; }
+.reply-failed { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); }
 .reply-failed p { color: var(--mist); }
 .skeleton { display: grid; gap: 10px; margin-bottom: var(--s3); }
 .skeleton span { height: 12px; border-radius: 6px; background: linear-gradient(90deg, var(--surface-2), var(--line), var(--surface-2)); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
@@ -177,7 +191,7 @@
 @keyframes sheet-in { from { transform: translateY(40%); opacity: 0; } to { transform: none; opacity: 1; } }
 
 @media (max-width: 560px) {
-  .composer { --ask-w: 88px; }
+  .composer { --ask-w: 76px; }
   .composer .btn { font-size: 12px; }
   .composer textarea { padding-left: var(--s2); padding-right: var(--s2); }
 }
@@ -189,7 +203,9 @@
   .alert-wrap { padding: var(--s2) var(--s3) 0; }
   .toasts { right: var(--s3); left: var(--s3); width: auto; bottom: 96px; }
   .demo-top { padding: 0 var(--s3); gap: var(--s2); }
-  .thread { padding: var(--s4) var(--s3); }
+  .thread { padding: var(--s3) var(--s3) var(--s4); }
+  .thread-bar { padding: 0 var(--s3); }
+  .thread-list { gap: var(--s5); }
   .dock { padding: var(--s2) var(--s3) var(--s2); }
   .composer-wrap .hint { display: none; }
   .composer-wrap .hint.is-alert { display: flex; padding: 0 var(--s2); }

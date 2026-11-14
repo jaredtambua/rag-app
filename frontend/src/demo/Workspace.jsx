@@ -7,7 +7,7 @@ import Sheet from "./Sheet.jsx";
 import Toasts, { ErrorAlert } from "./Toasts.jsx";
 import EmptyState from "./EmptyState.jsx";
 import AskPanel from "./AskPanel.jsx";
-import AnswerPanel from "./AnswerPanel.jsx";
+import Thread, { ThreadBar } from "./Thread.jsx";
 import { LIMITS } from "./limits.js";
 import "./demo.css";
 
@@ -39,12 +39,24 @@ export default function Workspace({ onNavigate }) {
   const firstRun = demo.documentsStatus === "ready" && count === 0;
   /* the ask box opens once the server is up and there is a document to ask about */
   const askLocked = loading || failed || firstRun;
-  const hasTurn = demo.hasTurn;
+  const turnCount = demo.thread.filter((item) => item.kind === "turn").length;
+  const hasTurn = turnCount > 0;
 
   /* on a wide screen the file picker is already on the page; on a phone it lives in the sheet */
   function pickFile() {
     if (compact) setSheetOpen(true);
     else inputRef.current?.click();
+  }
+
+  /* Try again and Clear history remove the button that had focus: put it back in the question box */
+  function retry(id) {
+    demo.retryTurn(id);
+    questionRef.current?.focus();
+  }
+
+  function clearHistory() {
+    demo.clearHistory();
+    questionRef.current?.focus();
   }
 
   function fillExample(text) {
@@ -110,10 +122,11 @@ export default function Workspace({ onNavigate }) {
         <main className="pane" id="main">
           <h1 className="visually-hidden">Tessel demo workspace</h1>
           {!sheetShown && <ErrorAlert message={error} onDone={clearError} />}
+          {hasTurn && <ThreadBar count={turnCount} disabled={demo.isAsking} onClear={clearHistory} />}
           <div className="thread">
             <div className="thread-inner">
               {hasTurn
-                ? <AnswerPanel answer={demo.answer} citations={demo.citations} isAsking={demo.isAsking} askedQuestion={demo.askedQuestion} failedMessage={demo.failedMessage} />
+                ? <Thread items={demo.thread} isAsking={demo.isAsking} onRetry={retry} onAddPdf={pickFile} noDocuments={firstRun} />
                 : <EmptyState loading={loading} waking={demo.waking} failed={failed} onRetry={demo.retryConnect} firstRun={firstRun} count={count} onPick={pickFile} onExample={fillExample} />}
             </div>
           </div>

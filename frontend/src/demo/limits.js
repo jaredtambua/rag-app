@@ -7,6 +7,7 @@ export const LIMITS = {
   minutes: 30,
   questionChars: 500,
   questionsPerHour: 20,
+  historyTurns: 20, /* questions kept on screen; the oldest drop off first */
 };
 
 export const MAX_FILE_BYTES = LIMITS.fileMb * 1024 * 1024;

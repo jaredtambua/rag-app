@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import ReactMarkdown from "react-markdown"; /* images are not rendered: an answer must not load anything from another site */
 import { FileIcon } from "./icons.jsx";
 
@@ -24,35 +24,28 @@ function Source({ citation }) {
   );
 }
 
-/* One question and its answer, as a short thread. The answer is a live region so screen readers announce it. */
-export default function AnswerPanel({ answer, citations, isAsking, askedQuestion, failedMessage }) {
-  const askedRef = useRef(null);
-
-  /* bring the new question to the top of the thread so the start of the answer is what the visitor sees */
-  useEffect(() => {
-    if (!isAsking) return;
-    const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    askedRef.current?.scrollIntoView({ block: "start", behavior: calm ? "auto" : "smooth" });
-  }, [isAsking]);
-
+/* One question and its answer. The thread around it is a live region, so a new answer is announced when it arrives. */
+export default function AnswerPanel({ turn, onRetry, retryDisabled, innerRef }) {
+  const { question, status, answer, citations, message } = turn;
   return (
-    <div className="turn" aria-live="polite" aria-busy={isAsking}>
-      <p className="asked" ref={askedRef}>{askedQuestion}</p>
+    <article className="turn" ref={innerRef} aria-busy={status === "pending"}>
+      <p className="asked">{question}</p>
 
-      {isAsking && (
+      {status === "pending" && (
         <div className="reply" role="status">
           <div className="skeleton" aria-hidden="true"><span /><span /><span /><span /></div>
           <p className="muted">Reading your documents and writing an answer...</p>
         </div>
       )}
 
-      {!isAsking && !answer && (
+      {status === "failed" && (
         <div className="reply reply-failed">
-          <p>{failedMessage || "No answer came back."} Your question is still in the box below, so you can try again.</p>
+          <p>{message || "No answer came back."}</p>
+          <button className="btn btn-ghost btn-small" type="button" disabled={retryDisabled} onClick={onRetry}>Try again</button>
         </div>
       )}
 
-      {!isAsking && answer && (
+      {status === "done" && (
         <>
           <div className="reply">
             <div className="markdown"><ReactMarkdown disallowedElements={["img"]}>{answer}</ReactMarkdown></div>
@@ -68,6 +61,6 @@ export default function AnswerPanel({ answer, citations, isAsking, askedQuestion
           )}
         </>
       )}
-    </div>
+    </article>
   );
 }

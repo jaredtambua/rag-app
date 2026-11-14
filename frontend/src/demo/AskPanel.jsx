@@ -2,10 +2,6 @@ import { useEffect, useRef } from "react";
 import { SendIcon } from "./icons.jsx";
 import { LIMITS, MESSAGES } from "./limits.js";
 
-/* the send shortcut works with Ctrl or Cmd; the hint names the one this computer uses */
-const IS_MAC = typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent || "");
-const SHORTCUT = IS_MAC ? "Cmd+Enter" : "Ctrl+Enter";
-
 /* The ask box, docked at the bottom of the conversation pane. */
 export default function AskPanel({ question, setQuestion, askQuestion, isAsking, locked, lockedHint, textareaRef }) {
   const fallbackRef = useRef(null);
@@ -23,11 +19,12 @@ export default function AskPanel({ question, setQuestion, askQuestion, isAsking,
   const over = length > LIMITS.questionChars;
   const nearLimit = length >= LIMITS.questionChars - 100;
 
+  /* Enter sends (so does Ctrl or Cmd+Enter); Shift+Enter is a new line. Enter that confirms an IME choice (Japanese, Chinese, Korean) must not send. */
   function onKeyDown(event) {
-    if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !isAsking && !over) {
-      event.preventDefault();
-      askQuestion();
-    }
+    if (event.key !== "Enter" || event.shiftKey) return;
+    if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+    event.preventDefault();
+    if (!isAsking && !locked && !over) askQuestion();
   }
 
   return (
@@ -55,7 +52,7 @@ export default function AskPanel({ question, setQuestion, askQuestion, isAsking,
             ? (lockedHint || "Questions open up once a document is added.")
             : over
               ? MESSAGES.questionTooLong
-              : `${SHORTCUT} to send. Up to ${LIMITS.questionsPerHour} questions an hour.`}
+              : `Enter to send, Shift+Enter for a new line. Up to ${LIMITS.questionsPerHour} questions an hour.`}
         </span>
         {!locked && nearLimit && <span className={`counter${over ? " is-over" : ""}`}>{length} / {LIMITS.questionChars}</span>}
       </p>
