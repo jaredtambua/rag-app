@@ -29,7 +29,7 @@ export default function EmptyState({ loading, waking, failed, onRetry, firstRun,
     return (
       <div className="empty-state">
         <h2>Start with a document you know.</h2>
-        <p>Add a PDF you know well, such as a report, an article or a contract, then test Tessel with questions you can check yourself. Every answer shows the pages it used.</p>
+        <p>Add a PDF you know well, such as a report, an article or a contract, then test Tessel with questions you can check yourself. Answers cite the pages they used.</p>
         <ol className="how">
           <li><span>1</span>Add a PDF</li>
           <li><span>2</span>Ask a question</li>
@@ -43,7 +43,7 @@ export default function EmptyState({ loading, waking, failed, onRetry, firstRun,
 
   return (
     <div className="empty-state">
-      <h2>{count === 1 ? "Ask your document anything." : count > 1 ? `Ask your ${count} documents anything.` : "Ask your documents anything."}</h2>
+      <h2>{count === 1 ? "Ask your document anything." : count > 1 ? `Ask your ${count}\u00a0documents anything.` : "Ask your documents anything."}</h2>
       <p>Ask in plain words. Answers cite the pages and passages they used.</p>
       <div className="chips" role="group" aria-label="Example questions">
         {EXAMPLES.map((text) => (

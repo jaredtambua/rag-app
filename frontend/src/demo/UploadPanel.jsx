@@ -21,7 +21,7 @@ export default function UploadPanel({ inputRef, selectedFiles, chooseFiles, uplo
   function onDrop(event) {
     event.preventDefault();
     setDragging(false);
-    if (isUploading || full) return;
+    if (isUploading) return;
     const dropped = Array.from(event.dataTransfer.files);
     if (dropped.length > 0) choose(dropped);
   }

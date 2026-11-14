@@ -6,6 +6,7 @@ export const LIMITS = {
   files: 3,
   minutes: 30,
   questionChars: 500,
+  questionsPerHour: 20,
 };
 
 export const MAX_FILE_BYTES = LIMITS.fileMb * 1024 * 1024;

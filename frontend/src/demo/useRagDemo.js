@@ -69,9 +69,10 @@ export function useRagDemo() {
   const connectRun = useRef(0);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [question, setQuestion] = useState("");
-  const [askedQuestion, setAskedQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [citations, setCitations] = useState([]);
+  /* the latest question and what came of it: { question, answer, citations, failedMessage } */
+  const [turn, setTurn] = useState(null);
+  const [pendingQuestion, setPendingQuestion] = useState("");
+  const seenIds = useRef(new Set());
   const [isUploading, setIsUploading] = useState(false);
   const [isAsking, setIsAsking] = useState(false);
   const [error, setError] = useState("");
@@ -99,7 +100,7 @@ export function useRagDemo() {
     } catch (err) {
       console.error("Load documents error:", err);
       if (quiet) return;
-      setError("Could not load documents.");
+      /* the screen explains this itself, with a Try again button, so no separate banner */
       setDocumentsStatus("failed");
     }
   }
@@ -130,7 +131,6 @@ export function useRagDemo() {
         if (Date.now() - started >= GIVE_UP_AFTER_MS) {
           setWaking(false);
           setDocumentsStatus("failed");
-          setError("The demo server did not respond. Please try again in a moment.");
           return;
         }
 
@@ -148,6 +148,14 @@ export function useRagDemo() {
     return () => { connectRun.current += 1; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /* An answer that cites a document is dropped when any document is deleted or runs out of time. */
+  useEffect(() => {
+    const ids = new Set(documents.map((doc) => doc.id));
+    const removed = [...seenIds.current].some((id) => !ids.has(id));
+    seenIds.current = ids;
+    if (removed) setTurn(null);
+  }, [documents]);
 
   /* once a minute, refresh the time-left labels */
   useEffect(() => {
@@ -171,6 +179,7 @@ export function useRagDemo() {
   function chooseFiles(files) {
     setJustUploaded(false);
     setNotice("");
+    setError(""); /* an old refusal must not outlive the choice that caused it */
 
     const problems = [];
     let accepted = files.filter((file) => {
@@ -251,9 +260,7 @@ export function useRagDemo() {
 
     setError("");
     setNotice("");
-    setAnswer("");
-    setCitations([]);
-    setAskedQuestion(question);
+    setPendingQuestion(question);
     setIsAsking(true);
 
     try {
@@ -264,16 +271,22 @@ export function useRagDemo() {
       });
 
       if (!response.ok) {
-        setError(await problemFrom(response, "Could not answer question."));
+        const message = await problemFrom(response, "Could not answer question.");
+        if (response.status >= 500) {
+          /* a fault on our side: the answer area says so and invites a retry */
+          setTurn({ question, answer: "", citations: [], failedMessage: message });
+        } else {
+          /* a refusal (such as the hourly limit): the banner explains and the previous answer stays */
+          setError(message);
+        }
         return;
       }
 
       const data = await response.json();
-      setAnswer(data.answer);
-      setCitations(data.citations || []);
+      setTurn({ question, answer: data.answer, citations: data.citations || [], failedMessage: "" });
     } catch (err) {
       console.error("Ask question error:", err);
-      setError("Could not answer question.");
+      setTurn({ question, answer: "", citations: [], failedMessage: "Could not reach the demo server." });
     } finally {
       setIsAsking(false);
     }
@@ -302,8 +315,12 @@ export function useRagDemo() {
   return {
     documents, documentsStatus, waking, retryConnect: connect,
     selectedFiles, chooseFiles, uploadDocument, isUploading,
-    question, setQuestion, askQuestion, isAsking, askedQuestion,
-    answer, citations,
+    question, setQuestion, askQuestion, isAsking,
+    hasTurn: Boolean(turn) || isAsking,
+    askedQuestion: isAsking ? pendingQuestion : turn?.question || "",
+    answer: turn?.answer || "",
+    citations: turn?.citations || [],
+    failedMessage: turn?.failedMessage || "",
     error, setError, notice, setNotice,
     deleteDocument,
   };

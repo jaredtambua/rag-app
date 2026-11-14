@@ -1,4 +1,4 @@
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Logo from "../components/Logo.jsx";
 import { BackIcon, FileIcon } from "./icons.jsx";
 import { useRagDemo } from "./useRagDemo.js";
@@ -8,6 +8,7 @@ import Toasts, { ErrorAlert } from "./Toasts.jsx";
 import EmptyState from "./EmptyState.jsx";
 import AskPanel from "./AskPanel.jsx";
 import AnswerPanel from "./AnswerPanel.jsx";
+import { LIMITS } from "./limits.js";
 import "./demo.css";
 
 /* below this width the documents column becomes a sheet opened from the top bar */
@@ -38,7 +39,7 @@ export default function Workspace({ onNavigate }) {
   const firstRun = demo.documentsStatus === "ready" && count === 0;
   /* the ask box opens once the server is up and there is a document to ask about */
   const askLocked = loading || failed || firstRun;
-  const hasTurn = Boolean(demo.askedQuestion);
+  const hasTurn = demo.hasTurn;
 
   /* on a wide screen the file picker is already on the page; on a phone it lives in the sheet */
   function pickFile() {
@@ -52,7 +53,32 @@ export default function Workspace({ onNavigate }) {
   }
 
   const sheetShown = compact && sheetOpen;
-  const clearError = () => demo.setError("");
+  const { error, setError, isUploading } = demo;
+  const clearError = () => setError("");
+
+  /* Escape dismisses the red banner (a drawer that is open keeps Escape for itself) */
+  useEffect(() => {
+    if (!error || sheetShown) return undefined;
+    const onKey = (event) => { if (event.key === "Escape") setError(""); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [error, sheetShown, setError]);
+
+  /* After an upload, or after the last file is deleted, the button that had focus is gone: put focus somewhere useful */
+  const wasUploading = useRef(false);
+  const lastCount = useRef(0);
+  useEffect(() => {
+    const finishedUpload = wasUploading.current && !isUploading;
+    const deletedLast = lastCount.current > 0 && count === 0;
+    wasUploading.current = isUploading;
+    lastCount.current = count;
+    if (!finishedUpload && !deletedLast) return;
+    const active = document.activeElement;
+    const lost = !active || active === document.body || active.tagName === "DIALOG";
+    if (!lost) return;
+    if (count < LIMITS.files) inputRef.current?.focus();
+    else if (!sheetShown) questionRef.current?.focus();
+  }, [isUploading, count, sheetShown]);
 
   const goHome = (event) => { event.preventDefault(); onNavigate("#/"); };
 
@@ -66,15 +92,13 @@ export default function Workspace({ onNavigate }) {
             <FileIcon size={14} /> <span className="label">Documents</span> <span className="count">{count}</span>
           </button>
         )}
-        <a className="btn btn-ghost btn-small back" href="#/" onClick={goHome}>
-          <BackIcon size={14} /> Back to site
+        <a className="btn btn-ghost btn-small back" href="#/" aria-label="Back to site" onClick={goHome}>
+          <BackIcon size={14} /> <span className="label">Back to site</span>
         </a>
       </header>
 
-      <Toasts
-        notice={demo.notice}
-        onDismissNotice={() => demo.setNotice("")}
-      />
+      {/* on a wide screen the message floats; on a phone it sits above the ask box (or in the drawer) so it never covers an answer */}
+      {!compact && <Toasts notice={demo.notice} onDismissNotice={() => demo.setNotice("")} />}
 
       <div className="layout">
         {!compact && (
@@ -85,16 +109,17 @@ export default function Workspace({ onNavigate }) {
 
         <main className="pane" id="main">
           <h1 className="visually-hidden">Tessel demo workspace</h1>
-          {!sheetShown && <ErrorAlert message={demo.error} onDone={clearError} />}
+          {!sheetShown && <ErrorAlert message={error} onDone={clearError} />}
           <div className="thread">
             <div className="thread-inner">
               {hasTurn
-                ? <AnswerPanel answer={demo.answer} citations={demo.citations} isAsking={demo.isAsking} askedQuestion={demo.askedQuestion} />
+                ? <AnswerPanel answer={demo.answer} citations={demo.citations} isAsking={demo.isAsking} askedQuestion={demo.askedQuestion} failedMessage={demo.failedMessage} />
                 : <EmptyState loading={loading} waking={demo.waking} failed={failed} onRetry={demo.retryConnect} firstRun={firstRun} count={count} onPick={pickFile} onExample={fillExample} />}
             </div>
           </div>
           <div className="dock">
             <div className="dock-inner">
+              {compact && !sheetShown && <Toasts inline notice={demo.notice} onDismissNotice={() => demo.setNotice("")} />}
               <AskPanel
                 question={demo.question}
                 setQuestion={demo.setQuestion}
@@ -111,6 +136,7 @@ export default function Workspace({ onNavigate }) {
 
       {compact && (
         <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="Documents">
+          <Toasts inline notice={demo.notice} onDismissNotice={() => demo.setNotice("")} />
           <ErrorAlert message={demo.error} onDone={clearError} />
           <Sidebar demo={demo} inputRef={inputRef} />
         </Sheet>

@@ -25,7 +25,7 @@ function Source({ citation }) {
 }
 
 /* One question and its answer, as a short thread. The answer is a live region so screen readers announce it. */
-export default function AnswerPanel({ answer, citations, isAsking, askedQuestion }) {
+export default function AnswerPanel({ answer, citations, isAsking, askedQuestion, failedMessage }) {
   const askedRef = useRef(null);
 
   /* bring the new question to the top of the thread so the start of the answer is what the visitor sees */
@@ -48,7 +48,7 @@ export default function AnswerPanel({ answer, citations, isAsking, askedQuestion
 
       {!isAsking && !answer && (
         <div className="reply reply-failed">
-          <p>No answer came back. Your question is still in the box below, so you can try again.</p>
+          <p>{failedMessage || "No answer came back."} Your question is still in the box below, so you can try again.</p>
         </div>
       )}
 

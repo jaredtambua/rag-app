@@ -86,8 +86,8 @@
 
 /* first run and ready-to-ask */
 .empty-state { margin: auto; text-align: center; display: grid; justify-items: center; gap: var(--s3); padding: var(--s4) 0; max-width: 560px; }
-.empty-state h2 { font-size: clamp(30px, 3.6vw, 44px); }
-.empty-state p { color: var(--mist); font-weight: 200; font-size: 18px; }
+.empty-state h2 { font-size: clamp(30px, 3.6vw, 44px); text-wrap: balance; }
+.empty-state p { color: var(--mist); font-weight: 200; font-size: 18px; text-wrap: pretty; }
 .empty-state .demo-note { font-size: 14px; color: var(--ash); }
 .how { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s2); padding: 0; margin: 0; }
 .how li { display: inline-flex; align-items: center; gap: 10px; padding: 6px 16px 6px 6px; border: 1px solid var(--line); border-radius: var(--r-pill); color: var(--mist); font-size: var(--text-small); font-weight: 600; }
@@ -105,7 +105,9 @@
 .composer textarea::placeholder { color: var(--ash); }
 .composer textarea:disabled { cursor: not-allowed; }
 .composer .btn { flex: none; width: var(--ask-w); padding-left: 0; padding-right: 0; }
-.composer-wrap .hint { margin-top: var(--s2); padding-left: 27px; text-align: left; font-size: 13px; }
+.composer-wrap .hint { margin-top: var(--s2); padding: 0 27px; text-align: left; font-size: 13px; display: flex; justify-content: space-between; gap: var(--s2); }
+.composer-wrap .hint .counter { flex: none; font-variant-numeric: tabular-nums; }
+.composer-wrap .hint .counter.is-over, .composer-wrap .hint.is-alert .counter.is-over { color: var(--error); font-weight: 600; }
 
 /* a question and its answer */
 .turn { display: grid; gap: var(--s3); align-content: start; scroll-margin-top: var(--s4); }
@@ -157,6 +159,9 @@
 .toast p { flex: 1; padding-top: 4px; font-size: 15px; white-space: pre-line; overflow-wrap: anywhere; }
 .toast .icon-btn { margin-top: -2px; }
 .toast-ok > svg { color: #7be0c4; }
+/* in the page flow: above the ask box on phones, at the top of the documents drawer */
+.toasts.is-inline { position: static; width: 100%; margin-bottom: var(--s2); pointer-events: auto; }
+.sheet .toasts.is-inline { flex: none; margin: 0 0 var(--s2); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* phones and small tablets: one column, documents in a bottom sheet */
@@ -187,6 +192,7 @@
   .thread { padding: var(--s4) var(--s3); }
   .dock { padding: var(--s2) var(--s3) var(--s2); }
   .composer-wrap .hint { display: none; }
+  .composer-wrap .hint.is-alert { display: flex; padding: 0 var(--s2); }
 }
 @media (max-width: 480px) {
   .docs-btn .label { display: none; }
@@ -196,4 +202,8 @@
   .how li { flex-direction: column; gap: 6px; padding: 10px 4px; border-radius: 16px; text-align: center; font-size: 12px; }
   .asked { max-width: 92%; }
   .reply { padding: var(--s3); }
+}
+@media (max-width: 350px) {
+  .back .label { display: none; }
+  .back { padding: 8px 12px; }
 }

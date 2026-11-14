@@ -43,3 +43,8 @@
 - backend/requirements.txt was UTF-16 in git (the earlier rewrite kept the old encoding); it is now UTF-8.
 - Not fixed: the Linux address-space limit is untested; a legitimate form-heavy PDF over the 8 MB content cap is refused.
 - RLIMIT_AS (Linux address-space ceiling) was removed from the PDF reader: untested, and it counts mapped libraries so it could break normal PDFs on Render. Protection is the 350 MB watcher, the 5 s limit and the stream caps.
+
+## QA repairs (front end, after 5.3)
+- Items 1 to 13 of the QA list done: balanced headings with a non-breaking space after the count, a rate-limit refusal keeps the previous answer (banner only), the 20-an-hour limit stated in the ask hint, icon-only "Back to site" below 350 px, focus moved after upload and after deleting the last file, Escape dismisses the banner, stale errors cleared on a new choice, dropping on a full upload zone shows the limit message, live 500-character counter with Ask disabled over the limit, upload confirmation inside the phone drawer and above the ask box on phones, answer cleared when a document is deleted or expires, one message when the server is unreachable, Cmd+Enter hint on Mac (both shortcuts work), copy "Answers cite the pages they used", landing left edges aligned to one gutter (64 px at 1440) and balanced ledes.
+- Behaviour choice: a server-side fault (5xx) or network failure still shows the "No answer came back" panel (with its reason) and no banner; refusals (4xx, including 429) show the banner only.
+- Not changed: triangles over text and the 390 px passage gap on the landing page. Checked with mocked backend and screenshots at 1440, 390 and 320 (2 rounds).

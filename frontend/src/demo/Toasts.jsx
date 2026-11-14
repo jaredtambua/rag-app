@@ -43,9 +43,10 @@ export function ErrorAlert({ message, onDone }) {
   );
 }
 
-export default function Toasts({ notice, onDismissNotice }) {
+/* `inline` puts the message in the page flow (phones, and inside the documents drawer) instead of floating over it */
+export default function Toasts({ notice, onDismissNotice, inline = false }) {
   return (
-    <div className="toasts">
+    <div className={`toasts${inline ? " is-inline" : ""}`}>
       {notice && <NoticeToast message={notice} onDone={onDismissNotice} />}
     </div>
   );
