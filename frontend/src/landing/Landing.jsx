@@ -17,7 +17,7 @@ const NAV_LINKS = [
 const USE_CASES = [
   { who: "Lawyers", title: "Find the clause across your contracts.", text: "And see exactly where it came from." },
   { who: "Researchers", title: "Ask a pile of papers one question.", text: "Get the answer with the passage attached." },
-  { who: "Small teams", title: "Make a shared drive answer back.", text: "Turn the folder nobody can search into something that can." },
+  { who: "Small teams", title: "Make your team’s documents answer back.", text: "Turn the folder nobody can search into something that can." },
 ];
 const FIRST_USE_STOP = 3;
 
@@ -85,7 +85,7 @@ export default function Landing({ onNavigate }) {
 
         <div className="scene-text t1" data-stop="1">
           <h2 className="head">Create your personal knowledge base.</h2>
-          <p className="small lede">Add the files you already have, then ask in plain words. Tessel keeps a copy to answer from and never modifies it.</p>
+          <p className="small lede">Add the files you already have, then ask in plain words. This is a demo: Tessel as a product would keep your knowledge base, built from your own documents.</p>
         </div>
 
         <div className="scene-text t2" data-stop="2">
@@ -111,14 +111,14 @@ export default function Landing({ onNavigate }) {
         <div className="scene-text t6" data-stop="6">
           <div className="copy">
             <h2 className="h-md">Keep it to files you can share.</h2>
-            <p className="lede">This demo shares one document store. Anyone who opens it can see and delete the uploaded files, so don&rsquo;t upload anything sensitive. Text from your files is sent to an AI service to index it and write answers.</p>
+            <p className="lede">Uploads are private to your browser and deleted 30 minutes after you add them. Their text is sent to an AI service to build the search index and write answers.</p>
           </div>
         </div>
 
         <div className="scene-text t7" data-stop="7">
           <div className="copy">
             <h2 className="h-lg">Try it with your own files.</h2>
-            <p className="lede">The demo is live. Upload a PDF, ask a question and see the page the answer came from.</p>
+            <p className="lede">The demo is live. Upload a PDF you know well, ask a question and see the page the answer came from.</p>
             <DemoLink onNavigate={onNavigate} />
           </div>
         </div>

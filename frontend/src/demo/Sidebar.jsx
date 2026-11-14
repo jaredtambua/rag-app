@@ -20,7 +20,7 @@ export default function Sidebar({ demo, inputRef }) {
         full={count >= LIMITS.files}
       />
       <DocumentList documents={demo.documents} status={demo.documentsStatus} deleteDocument={demo.deleteDocument} retryConnect={demo.retryConnect} />
-      <p className="side-warn">Uploads are private to this browser and removed {LIMITS.minutes} minutes after you add them.</p>
+      <p className="side-warn">Uploads are private to this browser, read by an AI service to answer you, and removed {LIMITS.minutes} minutes after you add them.</p>
     </div>
   );
 }

@@ -27,7 +27,7 @@ Files in `frontend/src/` (`demo/`, `landing/`, `routing.js`, `index.css`) and `f
 - If it goes wrong: after 90 seconds of failures show the existing plain error with a "Try again" action.
 
 ### 3.3 Front end: honest landing and demo copy
-- Status: not started
+- Status: done (1 screenshot round)
 - Does: landing and demo copy match the final design: no sample documents; uploads private and removed after 30 minutes; limits stated; and a clear line that the real product keeps a persistent, personalised knowledge base ("This is a demo. Tessel as a product would keep your knowledge base, built from your own documents.") Keep the landing scenes and animation as they are.
 - Does not: no new scenes, no claims about features that do not exist (no accounts, no sync), no promises the app cannot keep.
 - Needs: 3.1

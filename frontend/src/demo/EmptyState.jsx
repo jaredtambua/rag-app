@@ -36,6 +36,7 @@ export default function EmptyState({ loading, waking, failed, onRetry, firstRun,
           <li><span>3</span>Check the sources</li>
         </ol>
         <button className="btn btn-primary" type="button" onClick={onPick}><UploadIcon size={16} /> Add a PDF</button>
+        <p className="demo-note">This is a demo. Tessel as a product would keep your knowledge base, built from your own documents.</p>
       </div>
     );
   }
