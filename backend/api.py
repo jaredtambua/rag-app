@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import config
 import rate_limit
 import storage
+from followup import HistoryRejected, clean_history
 from models import QuestionRequest
 from rag import AnswerError, generate_answer
 from uploads import UploadRejected, clean_display_name, read_limited
@@ -173,6 +174,11 @@ def ask(
                 f"Questions can be up to {config.MAX_QUESTION_CHARACTERS} characters."
             ),
         )
+
+    try:
+        history = clean_history(body.history)
+    except HistoryRejected as rejection:
+        raise HTTPException(status_code=400, detail=rejection.message)
 
     # Only questions that passed validation use up quota.
     rate_limit.check_ask(visitor, rate_limit.client_ip(request))

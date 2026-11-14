@@ -67,6 +67,13 @@ MAX_FILES_PER_VISITOR = 3
 MAX_QUESTION_CHARACTERS = 500
 MAX_DISPLAY_NAME_CHARACTERS = 100
 
+# Conversation memory: earlier question-and-answer pairs sent with a question.
+MAX_HISTORY_TURNS = 5
+MAX_HISTORY_QUESTION_CHARS = MAX_QUESTION_CHARACTERS
+MAX_HISTORY_ANSWER_CHARS = 1000
+# Each earlier answer is cut to this many characters when it goes into a prompt.
+HISTORY_ANSWER_PROMPT_CHARS = 600
+
 # Rate limits, all per rolling hour. The totals are the cost ceiling,
 # because visitor IDs are made by the browser and can be rotated.
 RATE_WINDOW_SECONDS = 3600
