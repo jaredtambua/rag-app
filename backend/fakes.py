@@ -49,7 +49,7 @@ def fake_answer(question: str, context_blocks) -> dict:
             "citations": [],
         }
     block, chunk = best
-    quote = chunk.text.strip().split("\n")[0][:200]
+    quote = " ".join(chunk.text.split())[:240]
     return {
         "answer": f"According to the document: {quote}",
         "citations": [{"source": block.source, "page": chunk.page, "quote": quote}],

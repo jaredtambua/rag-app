@@ -1,0 +1,111 @@
+# Tessel
+
+Ask your documents anything. Tessel reads a PDF you upload and answers your questions, showing the exact pages it used.
+
+**Live demo:** https://rag-app-1-8mtr.onrender.com
+
+![The Tessel landing page](docs/screenshots/landing.png)
+
+This is a demo. Tessel as a product would keep your knowledge base, built from your own documents. The demo keeps nothing: every upload is private to your browser and deleted 30 minutes after you add it.
+
+| First run | An answer with sources |
+| --- | --- |
+| ![The demo before any document is added](docs/screenshots/demo-first-run.png) | ![An answer with the page it came from](docs/screenshots/demo-answer.png) |
+
+The screenshots were captured on a local copy that uses a built-in stand-in for the AI service (see "Tests" below), so the answer text is a plain quote rather than a written answer.
+
+## How it works
+
+1. You upload a PDF. The server reads the text of each page.
+2. The text is cut into overlapping chunks of about 800 characters.
+3. Each chunk becomes an embedding (a list of numbers that captures its meaning) from OpenAI's `text-embedding-3-small` model.
+4. The embeddings are stored in Chroma, a small vector database, tagged with your private visitor ID.
+5. When you ask a question, it is embedded the same way and the closest chunks are found, plus the chunks next to them for context.
+6. `gpt-4.1-mini` writes an answer using only that evidence and returns the page and quote behind each claim.
+
+## Stack
+
+- Front end: React 19, Vite, react-markdown.
+- Back end: Python, FastAPI, Chroma, PyMuPDF, the OpenAI API.
+- Hosting: Render (a static site and a web service).
+
+## Run it locally
+
+You need Python (the project is developed on 3.14.3), Node.js, and an OpenAI API key. The commands below use `cp`; on Windows Command Prompt use `copy` instead.
+
+**Back end** (from the repository root):
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate     macOS or Linux: source .venv/bin/activate
+pip install -r backend/requirements.txt
+cp backend/.env.example backend/.env        # then put your OpenAI key in backend/.env
+cd backend
+uvicorn api:app --port 8000
+```
+
+**Front end** (in a second terminal):
+
+```bash
+cd frontend
+npm install
+cp .env.example .env                         # points the page at http://localhost:8000
+npm run dev
+```
+
+Open http://localhost:5173. The dev server always uses port 5173 and refuses to start if it is busy, because the API only allows requests from that address (and the live site).
+
+### Settings
+
+Back end (`backend/.env`, or real environment variables):
+
+| Name | What it does |
+| --- | --- |
+| `OPENAI_API_KEY` | Your OpenAI key. Required. |
+| `ALLOWED_ORIGINS` | Comma-separated list of web addresses allowed to call the API. Defaults to `http://localhost:5173`, `http://127.0.0.1:5173` and the live site. |
+| `UPLOAD_TTL_SECONDS` | How long an upload lives. Defaults to 1800 (30 minutes). |
+| `DATA_DIR` | Where temporary uploads and the index are kept. Defaults to `backend/data/`, which is emptied every time the server starts. |
+| `ENABLE_API_DOCS` | Set to `1` to turn on the `/docs` page. Off by default. |
+
+Front end (`frontend/.env`):
+
+| Name | What it does |
+| --- | --- |
+| `VITE_API_URL` | Address of the API. It is baked in when the page is built, so set it before `npm run build`. |
+
+## Tests
+
+```bash
+pip install -r backend/requirements-dev.txt
+pytest                                        # from the repository root
+cd frontend && npm run lint && npm run build
+```
+
+The tests never call OpenAI. They use `FAKE_OPENAI=1`, a switch that replaces the embeddings and the answer with deterministic stand-ins. You can use the same switch to run the whole app locally without a key (`FAKE_OPENAI=1 uvicorn api:app --port 8000`). The server refuses to start with this switch if it detects Render.
+
+## Demo limits
+
+- Each browser gets a random visitor ID (kept in local storage, not a login). You only ever see and delete your own uploads.
+- 5 MB per file, 30 pages per PDF, 3 files at a time, PDF only.
+- 20 questions per hour, each up to 500 characters. There are also hourly caps per network address and in total, to keep the demo's cost in check.
+- Uploads are removed 30 minutes after you add them, and everything is wiped whenever the server restarts.
+- The text of your documents is sent to OpenAI to build the index and write answers, so keep it to files you are comfortable sharing.
+
+## Known limits
+
+- Answer quality has not been tuned. It uses plain vector search, with no keyword search or re-ranking.
+- Scanned PDFs (images of text) are not supported; there is no OCR.
+- Each question is answered on its own; there is no conversation memory.
+- Rate limits live in the server's memory, so they reset when it restarts, and the app assumes a single server.
+- The free Render server sleeps when idle, so the first visit can take up to a minute to wake it.
+- The tests use stand-ins for OpenAI, so real answer quality is only checked by trying the live demo.
+
+## Roadmap
+
+- A persistent, personal knowledge base per user (accounts, your documents kept between visits).
+- Hybrid search and re-ranking for better retrieval.
+- Checking answers against their sources.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
