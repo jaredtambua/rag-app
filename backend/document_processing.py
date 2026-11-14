@@ -3,6 +3,20 @@ import fitz
 from config import CHUNK_SIZE, CHUNK_OVERLAP
 
 
+# number of pages in a pdf (raises ValueError if it cannot be opened)
+def count_pages(pdf_path):
+    try:
+        with fitz.open(pdf_path) as doc:
+            if doc.needs_pass:
+                raise ValueError("PDF is password protected")
+
+            return doc.page_count
+    except ValueError:
+        raise
+    except Exception as error:
+        raise ValueError("PDF could not be opened") from error
+
+
 # extract text from a pdf
 def extract_pdf_text(pdf_path):
     if not pdf_path.exists():

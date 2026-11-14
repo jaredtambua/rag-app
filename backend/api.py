@@ -9,6 +9,7 @@ import config
 import storage
 from models import QuestionRequest
 from rag import generate_answer
+from uploads import UploadRejected, clean_display_name, read_limited
 from retrieval import retrieve_context
 from visitor import visitor_id
 
@@ -61,16 +62,22 @@ def upload_documents(
 ):
     uploaded = []
     skipped = []
+    first_status = None
 
     for file in files:
-        name = file.filename or ""
-
-        if not name.lower().endswith(".pdf"):
-            skipped.append({"filename": name, "reason": "Only PDF files are supported."})
+        try:
+            name = clean_display_name(file.filename)
+            data = read_limited(file.file)
+            document = storage.add_document(visitor, name, data)
+        except UploadRejected as rejection:
+            first_status = first_status or rejection.status
+            skipped.append({"filename": file.filename or "", "reason": rejection.message})
             continue
 
-        document = storage.add_document(visitor, name, file.file.read())
         uploaded.append(document["name"])
+
+    if not uploaded and first_status:
+        raise HTTPException(status_code=first_status, detail=skipped[0]["reason"])
 
     return {"uploaded": uploaded, "skipped": skipped}
 

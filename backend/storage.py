@@ -18,7 +18,16 @@ import clients
 import clock
 import config
 import vector_store
-from document_processing import build_chunk_records
+from document_processing import build_chunk_records, count_pages
+from uploads import (
+    MSG_DUPLICATE,
+    MSG_INVALID_PDF,
+    MSG_NO_TEXT,
+    MSG_PROCESSING_FAILED,
+    MSG_TOO_MANY_FILES,
+    MSG_TOO_MANY_PAGES,
+    UploadRejected,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -88,10 +97,24 @@ def has_documents(visitor_id: str) -> bool:
 
 
 def add_document(visitor_id: str, display_name: str, data: bytes) -> dict:
-    """Save and index one PDF for a visitor. Cleans up fully on failure."""
+    """Check, save and index one PDF for a visitor.
+
+    Raises UploadRejected with a user-facing message. Whatever happens, a
+    failed upload leaves no file and no index entries behind.
+    """
     doc_id = uuid.uuid4().hex
 
     with LOCK:
+        # The count and duplicate checks run inside the lock so two
+        # simultaneous uploads cannot both pass.
+        current = _live_documents(visitor_id)
+
+        if len(current) >= config.MAX_FILES_PER_VISITOR:
+            raise UploadRejected(409, MSG_TOO_MANY_FILES)
+
+        if any(doc.name.lower() == display_name.lower() for doc in current):
+            raise UploadRejected(400, MSG_DUPLICATE)
+
         path = _file_path(visitor_id, doc_id)
         uploaded_at = clock.now()
 
@@ -99,11 +122,28 @@ def add_document(visitor_id: str, display_name: str, data: bytes) -> dict:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(data)
 
-            chunk_records = build_chunk_records(path, doc_id, display_name)
+            try:
+                pages = count_pages(path)
 
-            vector_store.add_document(
-                visitor_id, doc_id, uploaded_at, display_name, chunk_records
-            )
+                if pages > config.MAX_PAGES:
+                    raise UploadRejected(400, MSG_TOO_MANY_PAGES)
+
+                chunk_records = build_chunk_records(path, doc_id, display_name)
+            except UploadRejected:
+                raise
+            except Exception:
+                raise UploadRejected(400, MSG_INVALID_PDF)
+
+            if not chunk_records:
+                raise UploadRejected(400, MSG_NO_TEXT)
+
+            try:
+                vector_store.add_document(
+                    visitor_id, doc_id, uploaded_at, display_name, chunk_records
+                )
+            except Exception as error:
+                logger.error("Indexing failed (%s)", type(error).__name__)
+                raise UploadRejected(500, MSG_PROCESSING_FAILED)
         except BaseException:
             _discard(visitor_id, doc_id)
             raise

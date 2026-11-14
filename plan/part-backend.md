@@ -15,7 +15,7 @@ Files are in `backend/`: `api.py`, `rag.py`, `retrieval.py`, `vector_store.py`, 
 - If it goes wrong: a cleanup error is logged and must not crash the app or other visitors' requests.
 
 ### 2.2 Upload limits and safe file handling
-- Status: not started
+- Status: done
 - Does: enforces 5 MB per file, 30 pages, at most 3 files per visitor at any time (count of current files), PDF only. Names are made safe. A broken or text-less PDF is rejected and leaves nothing behind.
 - Does not: no virus scanning, no OCR.
 - Needs: 2.1
