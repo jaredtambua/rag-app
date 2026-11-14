@@ -1,0 +1,24 @@
+/* The demo's limits, as the server enforces them. The browser checks them first so most refusals need no round trip,
+   but the server stays the authority. */
+export const LIMITS = {
+  fileMb: 5,
+  pages: 30,
+  files: 3,
+  minutes: 30,
+  questionChars: 500,
+};
+
+export const MAX_FILE_BYTES = LIMITS.fileMb * 1024 * 1024;
+
+export const MESSAGES = {
+  notPdf: "Only PDF files are supported.",
+  tooBig: `This file is larger than ${LIMITS.fileMb} MB.`,
+  tooManyFiles: `You can have up to ${LIMITS.files} files at a time. Delete one to add another.`,
+  questionTooLong: `Questions can be up to ${LIMITS.questionChars} characters.`,
+};
+
+/* "28 min left" for the list; the last minute is "Under a minute left" */
+export function formatTimeLeft(seconds) {
+  if (seconds < 60) return "Under a minute left";
+  return `${Math.ceil(seconds / 60)} min left`;
+}

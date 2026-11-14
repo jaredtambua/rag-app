@@ -3,14 +3,14 @@ import { UploadIcon } from "./icons.jsx";
 const EXAMPLES = ["Summarise this document", "What are the key points?", "What does it say about risks?"];
 
 /* What the conversation pane shows before the first question: first run guides to an upload, later it offers a start. */
-export default function EmptyState({ loading, firstRun, compact, count, onPick, onExample }) {
+export default function EmptyState({ loading, firstRun, count, onPick, onExample }) {
   if (loading) return <div className="empty-state" />;
 
   if (firstRun) {
     return (
       <div className="empty-state">
-        <h2>Start with a document.</h2>
-        <p>Add a PDF, ask a question about it, and Tessel answers with the pages it used.{compact && " This demo shares one document store, so don’t upload anything sensitive."}</p>
+        <h2>Start with a document you know.</h2>
+        <p>Add a PDF you know well, such as a report, an article or a contract, then test Tessel with questions you can check yourself. Every answer shows the pages it used.</p>
         <ol className="how">
           <li><span>1</span>Add a PDF</li>
           <li><span>2</span>Ask a question</li>

@@ -1,5 +1,6 @@
 import UploadPanel from "./UploadPanel.jsx";
 import DocumentList from "./DocumentList.jsx";
+import { LIMITS } from "./limits.js";
 
 /* The documents column: add on top, the list in the middle (the only part that scrolls), the honest warning at the foot. */
 export default function Sidebar({ demo, inputRef }) {
@@ -16,10 +17,10 @@ export default function Sidebar({ demo, inputRef }) {
         chooseFiles={demo.chooseFiles}
         uploadDocument={demo.uploadDocument}
         isUploading={demo.isUploading}
-        setError={demo.setError}
+        full={count >= LIMITS.files}
       />
       <DocumentList documents={demo.documents} status={demo.documentsStatus} deleteDocument={demo.deleteDocument} />
-      <p className="side-warn">This demo shares one document store, so don’t upload anything sensitive.</p>
+      <p className="side-warn">Uploads are private to this browser and removed {LIMITS.minutes} minutes after you add them.</p>
     </div>
   );
 }

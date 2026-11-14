@@ -87,7 +87,7 @@ export default function Workspace({ onNavigate }) {
             <div className="thread-inner">
               {hasTurn
                 ? <AnswerPanel answer={demo.answer} citations={demo.citations} isAsking={demo.isAsking} askedQuestion={demo.askedQuestion} />
-                : <EmptyState loading={loading} firstRun={firstRun} compact={compact} count={count} onPick={pickFile} onExample={fillExample} />}
+                : <EmptyState loading={loading} firstRun={firstRun} count={count} onPick={pickFile} onExample={fillExample} />}
             </div>
           </div>
           <div className="dock">

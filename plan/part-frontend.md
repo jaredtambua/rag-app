@@ -3,7 +3,7 @@
 Files in `frontend/src/` (`demo/`, `landing/`, `routing.js`, `index.css`) and `frontend/index.html`. Keep the Tessel look, existing layout and behaviour. Design reference: `C:\Users\dcruz\.claude\skills\design` (checks.md) for screenshot checks.
 
 ### 3.1 Front end: visitor ID, limits, expiry countdown, new messages
-- Status: not started
+- Status: done (1 screenshot round)
 - Does: the browser makes and remembers a visitor ID and sends it as `X-Visitor-Id` on every request. The documents list shows how long each file has left. The upload area states the limits (5 MB, 30 pages, 3 files) and a plain warning that uploads are removed after 30 minutes. Backend refusals (too big, limit reached, rate limit with retry time) are shown with the backend's message. When a file expires it disappears from the list without an error. The first-run screen invites the visitor to upload a document they know well.
 - Does not: no sample documents, no accounts, no change to the look.
 - Needs: 2.1, 2.2, 2.3

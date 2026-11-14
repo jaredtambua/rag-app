@@ -1,11 +1,43 @@
-/* All the demo's state and API calls. The requests, payloads and error messages are unchanged from the
-   original app; the screens only read what this hook returns. */
-import { useEffect, useState } from "react";
+/* All the demo's state and API calls. Every request carries the visitor ID; the screens only read what this hook returns. */
+import { useEffect, useMemo, useState } from "react";
+import { getVisitorId } from "./visitor.js";
+import { LIMITS, MAX_FILE_BYTES, MESSAGES } from "./limits.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+/* the time-left labels refresh this often */
+const TICK_MS = 60_000;
+
+const isPdf = (file) => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+
+function request(path, options = {}) {
+  const headers = { ...options.headers, "X-Visitor-Id": getVisitorId() };
+  return fetch(`${API_URL}${path}`, { ...options, headers });
+}
+
+/* The backend's own message is shown for any refusal. A rate limit without a time in its message gets the retry time added. */
+async function problemFrom(response, fallback) {
+  let detail = "";
+  try {
+    const data = await response.json();
+    if (typeof data.detail === "string") detail = data.detail;
+  } catch {
+    /* the body was not JSON: use the fallback */
+  }
+
+  if (!detail) return response.status === 413 ? MESSAGES.tooBig : fallback;
+
+  const wait = Number(response.headers.get("Retry-After"));
+  if (response.status === 429 && wait > 0 && !/minute/i.test(detail)) {
+    detail += ` Try again in about ${Math.max(1, Math.ceil(wait / 60))} minute${wait > 60 ? "s" : ""}.`;
+  }
+  return detail;
+}
+
 export function useRagDemo() {
-  const [documents, setDocuments] = useState([]);
+  /* the list as the server last sent it, and when it arrived; time left is worked out from these */
+  const [listing, setListing] = useState({ items: [], receivedAt: 0 });
+  const [now, setNow] = useState(() => Date.now());
   const [documentsStatus, setDocumentsStatus] = useState("loading"); // loading | ready | failed
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [question, setQuestion] = useState("");
@@ -18,14 +50,27 @@ export function useRagDemo() {
   const [notice, setNotice] = useState("");
   const [justUploaded, setJustUploaded] = useState(false);
 
-  async function loadDocuments() {
+  /* files that have run out of time drop off the list without any error */
+  const documents = useMemo(
+    () =>
+      listing.items
+        .map((item) => ({ ...item, secondsLeft: item.seconds_left - (now - listing.receivedAt) / 1000 }))
+        .filter((item) => item.secondsLeft > 0),
+    [listing, now],
+  );
+
+  /* `quiet` refreshes (after an expiry) never show an error */
+  async function loadDocuments({ quiet = false } = {}) {
     try {
-      const response = await fetch(`${API_URL}/documents`);
+      const response = await request("/documents");
       const data = await response.json();
-      setDocuments(data.documents || []);
+      if (!response.ok) throw new Error(data.detail || "Request failed");
+      setListing({ items: data.documents || [], receivedAt: Date.now() });
+      setNow(Date.now());
       setDocumentsStatus("ready");
     } catch (err) {
       console.error("Load documents error:", err);
+      if (quiet) return;
       setError("Could not load documents.");
       setDocumentsStatus("failed");
     }
@@ -37,11 +82,50 @@ export function useRagDemo() {
     loadDocuments();
   }, []);
 
-  /* choosing new files clears the "already uploaded" state, exactly as before */
+  /* once a minute, refresh the time-left labels */
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), TICK_MS);
+    return () => clearInterval(timer);
+  }, []);
+
+  /* when the soonest file runs out, drop it from view and ask the server for the true list */
+  useEffect(() => {
+    if (listing.items.length === 0) return undefined;
+    const soonest = Math.min(...listing.items.map((item) => item.seconds_left));
+    const wait = soonest * 1000 - (Date.now() - listing.receivedAt) + 400;
+    const timer = setTimeout(() => {
+      setNow(Date.now());
+      loadDocuments({ quiet: true });
+    }, Math.max(wait, 400));
+    return () => clearTimeout(timer);
+  }, [listing]);
+
+  /* choosing files checks the limits in the browser first; the server still decides */
   function chooseFiles(files) {
-    setSelectedFiles(files);
     setJustUploaded(false);
     setNotice("");
+
+    const problems = [];
+    let accepted = files.filter((file) => {
+      if (!isPdf(file)) {
+        problems.push(`${file.name}: ${MESSAGES.notPdf}`);
+        return false;
+      }
+      if (file.size > MAX_FILE_BYTES) {
+        problems.push(`${file.name}: ${MESSAGES.tooBig}`);
+        return false;
+      }
+      return true;
+    });
+
+    const room = Math.max(0, LIMITS.files - documents.length);
+    if (accepted.length > room) {
+      problems.push(MESSAGES.tooManyFiles);
+      accepted = accepted.slice(0, room);
+    }
+
+    setSelectedFiles(accepted);
+    if (problems.length > 0) setError(problems.join("\n"));
   }
 
   async function uploadDocument() {
@@ -58,19 +142,21 @@ export function useRagDemo() {
       const formData = new FormData();
       selectedFiles.forEach((file) => formData.append("files", file));
 
-      const response = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
-      const data = await response.json();
+      const response = await request("/upload", { method: "POST", body: formData });
 
       if (!response.ok) {
-        setError(data.detail || "Upload failed.");
+        setError(await problemFrom(response, "Upload failed."));
         return;
       }
+
+      const data = await response.json();
 
       if (data.skipped?.length > 0) {
         setError(data.skipped.map((item) => `${item.filename}: ${item.reason}`).join("\n"));
       }
       if (data.uploaded?.length > 0) {
-        setNotice(data.uploaded.length === 1 ? `Added ${data.uploaded[0]}.` : `Added ${data.uploaded.length} documents.`);
+        const what = data.uploaded.length === 1 ? data.uploaded[0] : `${data.uploaded.length} documents`;
+        setNotice(`Added ${what}. ${data.uploaded.length === 1 ? "It" : "They"} will be removed after ${LIMITS.minutes} minutes.`);
       }
 
       setSelectedFiles([]);
@@ -85,8 +171,14 @@ export function useRagDemo() {
   }
 
   async function askQuestion() {
-    if (!question.trim()) {
+    const trimmed = question.trim();
+
+    if (!trimmed) {
       setError("Please enter a question.");
+      return;
+    }
+    if (trimmed.length > LIMITS.questionChars) {
+      setError(MESSAGES.questionTooLong);
       return;
     }
 
@@ -98,18 +190,18 @@ export function useRagDemo() {
     setIsAsking(true);
 
     try {
-      const response = await fetch(`${API_URL}/ask`, {
+      const response = await request("/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
       });
-      const data = await response.json();
 
       if (!response.ok) {
-        setError(data.detail || "Could not answer question.");
+        setError(await problemFrom(response, "Could not answer question."));
         return;
       }
 
+      const data = await response.json();
       setAnswer(data.answer);
       setCitations(data.citations || []);
     } catch (err) {
@@ -120,14 +212,15 @@ export function useRagDemo() {
     }
   }
 
-  async function deleteDocument(filename) {
+  async function deleteDocument(id) {
     setError("");
     setNotice("");
 
     try {
-      const response = await fetch(`${API_URL}/documents/${encodeURIComponent(filename)}`, { method: "DELETE" });
-      if (!response.ok) {
-        setError("Failed to delete document.");
+      const response = await request(`/documents/${encodeURIComponent(id)}`, { method: "DELETE" });
+      /* a 404 means it already expired: the refresh below makes the list right, with no error */
+      if (!response.ok && response.status !== 404) {
+        setError(await problemFrom(response, "Failed to delete document."));
         return;
       }
     } catch (err) {

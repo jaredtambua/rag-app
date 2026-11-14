@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { SendIcon } from "./icons.jsx";
+import { LIMITS } from "./limits.js";
 
 /* The ask box, docked at the bottom of the conversation pane. */
 export default function AskPanel({ question, setQuestion, askQuestion, isAsking, locked, textareaRef }) {
@@ -29,6 +30,7 @@ export default function AskPanel({ question, setQuestion, askQuestion, isAsking,
           id="question"
           ref={ref}
           rows="1"
+          maxLength={LIMITS.questionChars}
           value={question}
           disabled={locked}
           onChange={(event) => setQuestion(event.target.value)}

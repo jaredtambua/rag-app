@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { CloseIcon, FileIcon, UploadIcon } from "./icons.jsx";
-
-const isPdf = (file) => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+import { LIMITS } from "./limits.js";
 
 function formatSize(bytes) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
@@ -10,7 +9,7 @@ function formatSize(bytes) {
 
 /* Compact on purpose: the list below it is what needs the room. The Upload button only appears once
    files are picked, so the dropzone is the single action until then. */
-export default function UploadPanel({ inputRef, selectedFiles, chooseFiles, uploadDocument, isUploading, setError }) {
+export default function UploadPanel({ inputRef, selectedFiles, chooseFiles, uploadDocument, isUploading, full }) {
   const [dragging, setDragging] = useState(false);
 
   /* the file input is cleared after each choice so the same file can be picked again */
@@ -22,17 +21,15 @@ export default function UploadPanel({ inputRef, selectedFiles, chooseFiles, uplo
   function onDrop(event) {
     event.preventDefault();
     setDragging(false);
-    if (isUploading) return;
+    if (isUploading || full) return;
     const dropped = Array.from(event.dataTransfer.files);
-    const pdfs = dropped.filter(isPdf);
-    if (pdfs.length < dropped.length) setError("Only PDF files can be added. Other files were left out.");
-    if (pdfs.length > 0) choose(pdfs);
+    if (dropped.length > 0) choose(dropped);
   }
 
   return (
     <section className="upload" aria-label="Add documents">
       <label
-        className={`dropzone${dragging ? " is-dragging" : ""}${isUploading ? " is-busy" : ""}`}
+        className={`dropzone${dragging ? " is-dragging" : ""}${isUploading ? " is-busy" : ""}${full ? " is-full" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
@@ -43,13 +40,17 @@ export default function UploadPanel({ inputRef, selectedFiles, chooseFiles, uplo
           type="file"
           accept="application/pdf"
           multiple
-          disabled={isUploading}
+          disabled={isUploading || full}
           onChange={(event) => choose(Array.from(event.target.files))}
         />
         <UploadIcon size={22} />
         <span className="dropzone-text">
-          <span className="dropzone-main">Drop PDFs or <span className="link-like">browse</span></span>
-          <span className="dropzone-hint">PDF files only</span>
+          <span className="dropzone-main">{full ? "File limit reached" : <>Drop PDFs or <span className="link-like">browse</span></>}</span>
+          <span className="dropzone-hint">
+            {full
+              ? `You have ${LIMITS.files} files. Delete one to add another.`
+              : `PDF, up to ${LIMITS.fileMb} MB and ${LIMITS.pages} pages each. Up to ${LIMITS.files} files.`}
+          </span>
         </span>
       </label>
 
