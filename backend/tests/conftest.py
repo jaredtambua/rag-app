@@ -42,6 +42,15 @@ class Clock:
         self.t += seconds
 
 
+@pytest.fixture(autouse=True)
+def clear_fake_calls():
+    import fakes
+
+    fakes.reset_calls()
+    yield
+    fakes.reset_calls()
+
+
 @pytest.fixture
 def clock():
     import clock as clock_module

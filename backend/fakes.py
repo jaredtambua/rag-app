@@ -32,8 +32,26 @@ def fake_embeddings(texts: list[str]) -> list[list[float]]:
     return [fake_embedding(text) for text in texts]
 
 
-def fake_answer(question: str, context_blocks) -> dict:
-    """Quote the best-matching retrieved chunk with its page citation."""
+# Test-only record of the rewrite calls made in fake mode: (question, history).
+REWRITE_CALLS: list = []
+
+
+def reset_calls() -> None:
+    REWRITE_CALLS.clear()
+
+
+def fake_rewrite(question: str, history) -> str:
+    """Stand-in for the follow-up rewrite: the question plus the previous question."""
+    if not history:
+        return question
+    return f"{question} {history[-1][0]}"
+
+
+def fake_answer(question: str, context_blocks, history=None) -> dict:
+    """Quote the best-matching retrieved chunk with its page citation.
+
+    Scores against the original question only; history is ignored.
+    """
     question_words = set(_words(question))
     best = None
     best_score = -1
