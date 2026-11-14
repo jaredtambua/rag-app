@@ -1,102 +1,116 @@
-import { useEffect, useRef } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import Logo from "../components/Logo.jsx";
-import { BackIcon, AlertIcon, CloseIcon } from "./icons.jsx";
+import { BackIcon, FileIcon } from "./icons.jsx";
 import { useRagDemo } from "./useRagDemo.js";
-import UploadPanel from "./UploadPanel.jsx";
-import DocumentList from "./DocumentList.jsx";
+import Sidebar from "./Sidebar.jsx";
+import Sheet from "./Sheet.jsx";
+import Toasts, { ErrorAlert } from "./Toasts.jsx";
+import EmptyState from "./EmptyState.jsx";
 import AskPanel from "./AskPanel.jsx";
 import AnswerPanel from "./AnswerPanel.jsx";
 import "./demo.css";
 
-const STEPS = ["Add a PDF", "Ask a question", "Check the source"];
+/* below this width the documents column becomes a sheet opened from the top bar */
+const COMPACT = "(max-width: 860px)";
 
-/* which step the visitor is on, worked out from what exists so far */
-function currentStep({ documents, answer, isAsking }) {
-  if (documents.length === 0) return 0;
-  return answer && !isAsking ? 2 : 1;
-}
-
-function Steps({ active }) {
-  return (
-    <ol className="steps" aria-label="How the demo works">
-      {STEPS.map((label, i) => (
-        <li key={label} aria-current={i === active ? "step" : undefined} data-done={i < active}>
-          <span className="step-num">{i + 1}</span>
-          {label}
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function ErrorBanner({ error, onDismiss }) {
-  const ref = useRef(null);
-  /* on a phone the message can be above the button that caused it, so bring it into view */
-  useEffect(() => {
-    ref.current?.scrollIntoView({ block: "nearest" });
-  }, [error]);
-  if (!error) return null;
-  return (
-    <div className="error-banner" role="alert" ref={ref}>
-      <AlertIcon size={20} />
-      <p>{error}</p>
-      <button className="icon-btn" type="button" aria-label="Dismiss message" onClick={onDismiss}><CloseIcon size={16} /></button>
-    </div>
+function useMediaQuery(query) {
+  return useSyncExternalStore(
+    (notify) => {
+      const list = window.matchMedia(query);
+      list.addEventListener("change", notify);
+      return () => list.removeEventListener("change", notify);
+    },
+    () => window.matchMedia(query).matches,
+    () => false,
   );
 }
 
 export default function Workspace({ onNavigate }) {
   const demo = useRagDemo();
-  const hasDocuments = demo.documents.length > 0;
-  const firstRun = demo.documentsStatus !== "loading" && !hasDocuments;
+  const compact = useMediaQuery(COMPACT);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const inputRef = useRef(null);
+  const questionRef = useRef(null);
+
+  const count = demo.documents.length;
+  const loading = demo.documentsStatus === "loading";
+  const firstRun = demo.documentsStatus === "ready" && count === 0;
+  const hasTurn = Boolean(demo.askedQuestion);
+
+  /* on a wide screen the file picker is already on the page; on a phone it lives in the sheet */
+  function pickFile() {
+    if (compact) setSheetOpen(true);
+    else inputRef.current?.click();
+  }
+
+  function fillExample(text) {
+    demo.setQuestion(text);
+    questionRef.current?.focus();
+  }
+
+  const sheetShown = compact && sheetOpen;
+  const clearError = () => demo.setError("");
+
+  const goHome = (event) => { event.preventDefault(); onNavigate("#/"); };
 
   return (
     <div className="demo">
       <header className="demo-top">
-        <a className="logo-link" href="#/" aria-label="Tessel home" onClick={(e) => { e.preventDefault(); onNavigate("#/"); }}><Logo /></a>
+        <a className="logo-link" href="#/" aria-label="Tessel home" onClick={goHome}><Logo /></a>
         <span className="demo-label">Demo workspace</span>
-        <a className="btn btn-ghost btn-small back" href="#/" onClick={(e) => { e.preventDefault(); onNavigate("#/"); }}>
+        {compact && (
+          <button className="btn btn-ghost btn-small docs-btn" type="button" aria-haspopup="dialog" aria-label={`Documents, ${count}`} onClick={() => setSheetOpen(true)}>
+            <FileIcon size={14} /> <span className="label">Documents</span> <span className="count">{count}</span>
+          </button>
+        )}
+        <a className="btn btn-ghost btn-small back" href="#/" onClick={goHome}>
           <BackIcon size={14} /> Back to site
         </a>
       </header>
 
-      <main className="workspace" id="main">
-        <div className="intro">
-          <h1>{firstRun ? "Start with a document." : "Ask your documents anything."}</h1>
-          <p>
-            {firstRun
-              ? "Add a PDF on the left. Once it is in, ask a question and Tessel will answer and cite the pages it used. This demo shares one document store, so don’t upload anything sensitive."
-              : "Ask in plain words. Answers cite the pages and passages they used."}
-          </p>
-        </div>
+      <Toasts
+        notice={demo.notice}
+        onDismissNotice={() => demo.setNotice("")}
+      />
 
-        <Steps active={currentStep(demo)} />
-        <ErrorBanner error={demo.error} onDismiss={() => demo.setError("")} />
+      <div className="layout">
+        {!compact && (
+          <aside className="side-col" aria-label="Documents">
+            <Sidebar demo={demo} inputRef={inputRef} />
+          </aside>
+        )}
 
-        <div className="grid">
-          <div className="col">
-            <UploadPanel
-              selectedFiles={demo.selectedFiles}
-              chooseFiles={demo.chooseFiles}
-              uploadDocument={demo.uploadDocument}
-              isUploading={demo.isUploading}
-              notice={demo.notice}
-              setError={demo.setError}
-            />
-            <DocumentList documents={demo.documents} status={demo.documentsStatus} deleteDocument={demo.deleteDocument} />
+        <main className="pane" id="main">
+          <h1 className="visually-hidden">Tessel demo workspace</h1>
+          {!sheetShown && <ErrorAlert message={demo.error} onDone={clearError} />}
+          <div className="thread">
+            <div className="thread-inner">
+              {hasTurn
+                ? <AnswerPanel answer={demo.answer} citations={demo.citations} isAsking={demo.isAsking} askedQuestion={demo.askedQuestion} />
+                : <EmptyState loading={loading} firstRun={firstRun} compact={compact} count={count} onPick={pickFile} onExample={fillExample} />}
+            </div>
           </div>
-          <div className="col">
-            <AskPanel
-              question={demo.question}
-              setQuestion={demo.setQuestion}
-              askQuestion={demo.askQuestion}
-              isAsking={demo.isAsking}
-              hasDocuments={hasDocuments}
-            />
-            <AnswerPanel answer={demo.answer} citations={demo.citations} isAsking={demo.isAsking} askedQuestion={demo.askedQuestion} />
+          <div className="dock">
+            <div className="dock-inner">
+              <AskPanel
+                question={demo.question}
+                setQuestion={demo.setQuestion}
+                askQuestion={demo.askQuestion}
+                isAsking={demo.isAsking}
+                locked={firstRun}
+                textareaRef={questionRef}
+              />
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
+
+      {compact && (
+        <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="Documents">
+          <ErrorAlert message={demo.error} onDone={clearError} />
+          <Sidebar demo={demo} inputRef={inputRef} />
+        </Sheet>
+      )}
     </div>
   );
 }

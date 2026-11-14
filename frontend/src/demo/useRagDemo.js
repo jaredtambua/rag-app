@@ -144,7 +144,7 @@ export function useRagDemo() {
     selectedFiles, chooseFiles, uploadDocument, isUploading,
     question, setQuestion, askQuestion, isAsking, askedQuestion,
     answer, citations,
-    error, setError, notice,
+    error, setError, notice, setNotice,
     deleteDocument,
   };
 }

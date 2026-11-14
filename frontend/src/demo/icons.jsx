@@ -15,3 +15,5 @@ export const BackIcon = (p) => <Icon {...p}><path d="M19 12H5" /><path d="m11 6-
 export const AlertIcon = (p) => <Icon {...p}><path d="M12 3 2.5 20h19z" /><path d="M12 10v4" /><path d="M12 17.5v.01" /></Icon>;
 export const CheckIcon = (p) => <Icon {...p}><path d="m5 12 5 5 9-10" /></Icon>;
 export const CloseIcon = (p) => <Icon {...p}><path d="M6 6l12 12" /><path d="M18 6 6 18" /></Icon>;
+
+export const SearchIcon = (p) => <Icon {...p}><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></Icon>;

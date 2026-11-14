@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { CloseIcon, FileIcon, UploadIcon } from "./icons.jsx";
 
 const isPdf = (file) => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
@@ -8,8 +8,9 @@ function formatSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function UploadPanel({ selectedFiles, chooseFiles, uploadDocument, isUploading, notice, setError }) {
-  const inputRef = useRef(null);
+/* Compact on purpose: the list below it is what needs the room. The Upload button only appears once
+   files are picked, so the dropzone is the single action until then. */
+export default function UploadPanel({ inputRef, selectedFiles, chooseFiles, uploadDocument, isUploading, setError }) {
   const [dragging, setDragging] = useState(false);
 
   /* the file input is cleared after each choice so the same file can be picked again */
@@ -29,9 +30,7 @@ export default function UploadPanel({ selectedFiles, chooseFiles, uploadDocument
   }
 
   return (
-    <section className="panel" aria-labelledby="upload-title">
-      <h2 id="upload-title" className="panel-title">1. Add your documents</h2>
-
+    <section className="upload" aria-label="Add documents">
       <label
         className={`dropzone${dragging ? " is-dragging" : ""}${isUploading ? " is-busy" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -47,9 +46,11 @@ export default function UploadPanel({ selectedFiles, chooseFiles, uploadDocument
           disabled={isUploading}
           onChange={(event) => choose(Array.from(event.target.files))}
         />
-        <UploadIcon size={26} />
-        <span className="dropzone-main">Drop PDFs here or <span className="link-like">browse</span></span>
-        <span className="dropzone-hint">PDF files only</span>
+        <UploadIcon size={22} />
+        <span className="dropzone-text">
+          <span className="dropzone-main">Drop PDFs or <span className="link-like">browse</span></span>
+          <span className="dropzone-hint">PDF files only</span>
+        </span>
       </label>
 
       {selectedFiles.length > 0 && (
@@ -57,7 +58,7 @@ export default function UploadPanel({ selectedFiles, chooseFiles, uploadDocument
           {selectedFiles.map((file) => (
             <li key={`${file.name}-${file.size}-${file.lastModified}`}>
               <FileIcon size={16} />
-              <span className="name">{file.name}</span>
+              <span className="name" title={file.name}>{file.name}</span>
               <span className="size">{formatSize(file.size)}</span>
             </li>
           ))}
@@ -71,18 +72,18 @@ export default function UploadPanel({ selectedFiles, chooseFiles, uploadDocument
         </div>
       )}
 
-      {!isUploading && notice && <p className="notice" role="status">{notice}</p>}
-
-      <div className="row">
-        <button className="btn btn-primary" type="button" onClick={uploadDocument} disabled={isUploading}>
-          {isUploading ? "Uploading..." : selectedFiles.length > 1 ? `Upload ${selectedFiles.length} PDFs` : "Upload PDF"}
-        </button>
-        {selectedFiles.length > 0 && !isUploading && (
-          <button className="btn btn-ghost btn-small" type="button" onClick={() => choose([])}>
-            <CloseIcon size={14} /> Clear
+      {(selectedFiles.length > 0 || isUploading) && (
+        <div className="upload-actions">
+          <button className="btn btn-primary" type="button" onClick={uploadDocument} disabled={isUploading}>
+            {isUploading ? "Uploading..." : selectedFiles.length > 1 ? `Upload ${selectedFiles.length} PDFs` : "Upload PDF"}
           </button>
-        )}
-      </div>
+          {!isUploading && (
+            <button className="btn btn-ghost btn-small" type="button" onClick={() => choose([])}>
+              <CloseIcon size={14} /> Clear
+            </button>
+          )}
+        </div>
+      )}
     </section>
   );
 }

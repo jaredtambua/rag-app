@@ -1,0 +1,25 @@
+import UploadPanel from "./UploadPanel.jsx";
+import DocumentList from "./DocumentList.jsx";
+
+/* The documents column: add on top, the list in the middle (the only part that scrolls), the honest warning at the foot. */
+export default function Sidebar({ demo, inputRef }) {
+  const count = demo.documents.length;
+  return (
+    <div className="side">
+      <div className="side-head">
+        <h2>Documents</h2>
+        <span className="count" aria-live="polite" aria-label={`${count} documents`}>{count}</span>
+      </div>
+      <UploadPanel
+        inputRef={inputRef}
+        selectedFiles={demo.selectedFiles}
+        chooseFiles={demo.chooseFiles}
+        uploadDocument={demo.uploadDocument}
+        isUploading={demo.isUploading}
+        setError={demo.setError}
+      />
+      <DocumentList documents={demo.documents} status={demo.documentsStatus} deleteDocument={demo.deleteDocument} />
+      <p className="side-warn">This demo shares one document store, so don’t upload anything sensitive.</p>
+    </div>
+  );
+}

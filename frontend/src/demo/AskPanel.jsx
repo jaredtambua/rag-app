@@ -1,8 +1,19 @@
+import { useEffect, useRef } from "react";
 import { SendIcon } from "./icons.jsx";
 
-const EXAMPLES = ["Summarise this document", "What are the key points?", "What does it say about risks?"];
+/* The ask box, docked at the bottom of the conversation pane. */
+export default function AskPanel({ question, setQuestion, askQuestion, isAsking, locked, textareaRef }) {
+  const fallbackRef = useRef(null);
+  const ref = textareaRef || fallbackRef;
 
-export default function AskPanel({ question, setQuestion, askQuestion, isAsking, hasDocuments }) {
+  /* grow with the text up to a limit, and shrink again when it is replaced or cleared */
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 164)}px`;
+  }, [question, ref]);
+
   function onKeyDown(event) {
     if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !isAsking) {
       event.preventDefault();
@@ -11,33 +22,24 @@ export default function AskPanel({ question, setQuestion, askQuestion, isAsking,
   }
 
   return (
-    <section className="panel" aria-labelledby="ask-title">
-      <h2 id="ask-title" className="panel-title">2. Ask a question</h2>
-
-      <label className="visually-hidden" htmlFor="question">Your question</label>
-      <textarea
-        id="question"
-        rows="4"
-        value={question}
-        onChange={(event) => setQuestion(event.target.value)}
-        onKeyDown={onKeyDown}
-        placeholder="Example: What accuracy did the classifier achieve?"
-      />
-
-      <div className="chips" aria-label="Example questions">
-        {EXAMPLES.map((text) => (
-          <button key={text} className="chip" type="button" onClick={() => setQuestion(text)}>{text}</button>
-        ))}
-      </div>
-
-      <div className="row">
-        <button className="btn btn-primary" type="button" onClick={askQuestion} disabled={isAsking}>
+    <form className="composer-wrap" onSubmit={(event) => { event.preventDefault(); if (!isAsking) askQuestion(); }}>
+      <div className="composer">
+        <label className="visually-hidden" htmlFor="question">Your question</label>
+        <textarea
+          id="question"
+          ref={ref}
+          rows="1"
+          value={question}
+          disabled={locked}
+          onChange={(event) => setQuestion(event.target.value)}
+          onKeyDown={onKeyDown}
+          placeholder={locked ? "Add a PDF to start asking" : "Ask about your documents"}
+        />
+        <button className="btn btn-primary" type="submit" disabled={isAsking || locked}>
           {isAsking ? "Thinking..." : "Ask"} {!isAsking && <SendIcon size={16} />}
         </button>
-        <span className="hint">
-          {hasDocuments ? "Press Ctrl+Enter to send." : "Add a PDF first, then ask about it."}
-        </span>
       </div>
-    </section>
+      <p className="hint">{locked ? "Questions open up once a document is added." : "Ctrl+Enter to send. Enter adds a new line."}</p>
+    </form>
   );
 }
