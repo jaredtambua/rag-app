@@ -160,12 +160,19 @@ def test_startup_wipes_data_folder(tmp_path, monkeypatch, clock):
     clients.reset_clients()
 
 
-def test_wipe_refuses_a_shared_folder():
+def test_wipe_refuses_a_shared_folder(tmp_path):
+    import tempfile
+    from pathlib import Path
+
     import config
 
+    # A dedicated folder is fine: one called "data", or anything inside the temp folder.
     assert config.data_dir_is_safe_to_wipe(config.DEFAULT_DATA_DIR)
-    assert not config.data_dir_is_safe_to_wipe(config.BACKEND_DIR)
-    assert not config.data_dir_is_safe_to_wipe(config.BACKEND_DIR.parent)
+    assert config.data_dir_is_safe_to_wipe(tmp_path / "anything")
+    # Shared places are refused, wherever the project is checked out.
+    home = Path.home()
+    for shared in (home, home / "Documents", Path(home.anchor), Path(tempfile.gettempdir())):
+        assert not config.data_dir_is_safe_to_wipe(shared), shared
 
 
 @pytest.mark.parametrize(

@@ -13,7 +13,7 @@
 - If it goes wrong: if lint or build fails, fix the failure first (it is front-end code only).
 
 ### 4.1 README, licence, example settings
-- Status: not started
+- Status: done
 - Does: a root `README.md`, an MIT `LICENSE`, `backend/.env.example`, `frontend/.env.example`; replaces `frontend/README.md` (Vite template) with a short pointer to the root README.
 - Does not: no footer or profile links; no claims beyond what is built.
 - Needs: 2.4, 3.3, 3.4
@@ -25,7 +25,7 @@
 - If it goes wrong: if a command cannot be verified, say so in the README's known limits or fix it.
 
 ### 4.2 Repo tidy
-- Status: not started
+- Status: done
 - Does: removes duplicate lines in `.gitignore`; moves the manual command-line scripts (`app.py`, `reindex.py`, `display.py`) into `backend/scripts/` or removes them if the new design makes them dead; confirms nothing runtime (vector store, documents, `__pycache__`, `.env`) is tracked.
 - Does not: no history rewrite, no deletion of anything still used.
 - Needs: 2.4

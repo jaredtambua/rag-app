@@ -61,8 +61,8 @@ Decisions (made with the user, do not reopen):
 - [x] 3.2 Front end: server waking-up message
 - [x] 3.3 Front end: honest landing and demo copy
 - [x] 3.4 Share preview, favicon, dev port, unused files
-- [ ] 4.1 README, licence, example settings
-- [ ] 4.2 Repo tidy
+- [x] 4.1 README, licence, example settings
+- [x] 4.2 Repo tidy
 - [ ] 5.1 Automated checks (backend tests, front end lint and build)
 - [ ] 5.2 Security testing
 - [ ] 5.3 Browser walk-through (QA)
