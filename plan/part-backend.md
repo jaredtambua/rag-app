@@ -3,7 +3,7 @@
 Files are in `backend/`: `api.py`, `rag.py`, `retrieval.py`, `vector_store.py`, `document_processing.py`, `clients.py`, `embeddings.py`, `config.py`, `models.py`. The code currently uses one global Chroma collection and a global documents folder; functions must now take the visitor (collection filter and folder) explicitly. Remove or rewrite `remove_deleted_documents_from_chroma`. Tests run from the repo root: add a `backend/tests/conftest.py` (or `pytest.ini`) that puts `backend/` on the path, and make `clients.py` import safely without an OpenAI key (create clients lazily or use a dummy key under test). Read them first and keep the existing endpoints and response shapes unless a part says otherwise. Write each test first for the behaviours below, using a stub for OpenAI (no real calls).
 
 ### 2.1 Per-visitor private storage with 30-minute expiry
-- Status: not started
+- Status: done
 - Does: every request carries an `X-Visitor-Id` header (UUID). Each visitor's files and search index are stored separately from everyone else's. `GET /documents` lists only that visitor's files, with an expiry time per file. `DELETE` removes only that visitor's file (and its index entries). A background cleanup runs every few minutes and removes files and index entries older than 30 minutes since upload.
 - Does not: no login, no persistence across restarts, no sample documents.
 - Needs: nothing

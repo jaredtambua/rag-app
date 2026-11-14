@@ -1,5 +1,3 @@
-import hashlib
-
 import fitz
 
 from config import CHUNK_SIZE, CHUNK_OVERLAP
@@ -10,14 +8,14 @@ def extract_pdf_text(pdf_path):
     if not pdf_path.exists():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
 
-    doc = fitz.open(pdf_path)
     pages = []
 
-    for page_number, page in enumerate(doc, start=1):
-        text = page.get_text()
+    with fitz.open(pdf_path) as doc:
+        for page_number, page in enumerate(doc, start=1):
+            text = page.get_text()
 
-        if text.strip():
-            pages.append({"page": page_number, "text": text})
+            if text.strip():
+                pages.append({"page": page_number, "text": text})
 
     return pages
 
@@ -97,8 +95,7 @@ def chunk_text(text, chunk_size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
 
 
 # build chunk records from a pdf
-def build_chunk_records(pdf_path):
-    source_name = pdf_path.name
+def build_chunk_records(pdf_path, doc_id, source_name):
     pages = extract_pdf_text(pdf_path)
 
     chunk_records = []
@@ -110,7 +107,7 @@ def build_chunk_records(pdf_path):
         for chunk_number, chunk in enumerate(chunks, start=1):
             chunk_records.append(
                 {
-                    "id": f"{source_name}-chunk-{chunk_index}",
+                    "id": f"{doc_id}-chunk-{chunk_index}",
                     "source": source_name,
                     "page": page["page"],
                     "chunk_number": chunk_number,
@@ -122,10 +119,3 @@ def build_chunk_records(pdf_path):
             chunk_index += 1
 
     return chunk_records
-
-
-# calculate a file hash
-def calculate_file_hash(file_path):
-    file_bytes = file_path.read_bytes()
-
-    return hashlib.sha256(file_bytes).hexdigest()

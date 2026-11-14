@@ -1,24 +1,35 @@
-from fastapi import FastAPI, UploadFile, HTTPException, File
+import logging
+from contextlib import asynccontextmanager
 from typing import List
 
-from rag import generate_answer
-from vector_store import (
-    index_document,
-    remove_deleted_documents_from_chroma,
-)
-
-from retrieval import retrieve_context
-from rag import generate_answer
-
-from models import QuestionRequest
-
-from pathlib import Path
-
-from config import DOCUMENTS_DIR
-
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+import config
+import storage
+from models import QuestionRequest
+from rag import generate_answer
+from retrieval import retrieve_context
+from visitor import visitor_id
+
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Uploads never survive a restart, matching the 30-minute promise.
+    storage.reset_all()
+
+    sweeper = storage.Sweeper(config.SWEEP_INTERVAL_SECONDS)
+    sweeper.start()
+
+    try:
+        yield
+    finally:
+        sweeper.stop()
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,72 +49,42 @@ def health_check():
 
 
 @app.post("/ask")
-def ask(request: QuestionRequest):
-    context = retrieve_context(request.question)
+def ask(request: QuestionRequest, visitor: str = Depends(visitor_id)):
+    context = retrieve_context(visitor, request.question)
 
-    response = generate_answer(
-        request.question,
-        context,
-    )
-
-    return response
+    return generate_answer(request.question, context)
 
 
 @app.post("/upload")
-async def upload_documents(files: List[UploadFile] = File(...)):
-    DOCUMENTS_DIR.mkdir(exist_ok=True)
-
+def upload_documents(
+    files: List[UploadFile] = File(...), visitor: str = Depends(visitor_id)
+):
     uploaded = []
     skipped = []
 
     for file in files:
-        if not file.filename.endswith(".pdf"):
-            skipped.append(
-                {"filename": file.filename, "reason": "Only PDF files are supported."}
-            )
+        name = file.filename or ""
+
+        if not name.lower().endswith(".pdf"):
+            skipped.append({"filename": name, "reason": "Only PDF files are supported."})
             continue
 
-        file_path = DOCUMENTS_DIR / file.filename
-
-        if file_path.exists():
-            skipped.append(
-                {
-                    "filename": file.filename,
-                    "reason": "This document has already been uploaded.",
-                }
-            )
-            continue
-
-        contents = await file.read()
-
-        with open(file_path, "wb") as f:
-            f.write(contents)
-
-        index_document(file_path)
-
-        uploaded.append(file.filename)
+        document = storage.add_document(visitor, name, file.file.read())
+        uploaded.append(document["name"])
 
     return {"uploaded": uploaded, "skipped": skipped}
 
 
 @app.get("/documents")
-def list_documents():
-    DOCUMENTS_DIR.mkdir(exist_ok=True)
-
-    pdf_files = sorted(file.name for file in DOCUMENTS_DIR.glob("*.pdf"))
-
-    return {"documents": pdf_files}
+def list_documents(visitor: str = Depends(visitor_id)):
+    return {"documents": storage.list_documents(visitor)}
 
 
-@app.delete("/documents/{filename}")
-def delete_document(filename: str):
-    file_path = DOCUMENTS_DIR / filename
-
-    if not file_path.exists():
+@app.delete("/documents/{doc_id}")
+def delete_document(doc_id: str, visitor: str = Depends(visitor_id)):
+    try:
+        document = storage.delete_document(visitor, doc_id)
+    except storage.DocumentNotFound:
         raise HTTPException(status_code=404, detail="Document not found.")
 
-    file_path.unlink()
-
-    remove_deleted_documents_from_chroma()
-
-    return {"message": "Document deleted successfully.", "filename": filename}
+    return {"message": "Document deleted successfully.", "id": document["id"]}

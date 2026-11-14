@@ -34,3 +34,6 @@ backend/vectorstore/
 
 # private design working material
 design/
+
+# runtime visitor data (temporary uploads and index)
+backend/data/

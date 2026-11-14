@@ -1,7 +1,7 @@
 # Starting and polish parts (1.1, 4.x)
 
 ### 1.1 Save the current UI work as a commit
-- Status: not started
+- Status: done (commit 64c5aa6)
 - Does: commits the uncommitted front-end work (demo layout redesign, ask bar fixes, headline wording) on `master`. No push.
 - Does not: no push, no new changes.
 - Needs: nothing

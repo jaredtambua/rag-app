@@ -1,3 +1,7 @@
+import clock
+import config
+import storage
+from embeddings import embed_text
 from config import (
     MAX_CONTEXT_CHARACTERS,
     MAX_DISTANCE,
@@ -8,10 +12,7 @@ from config import (
 
 from models import ContextBlock, RetrievedChunk
 
-from vector_store import (
-    get_chunk_by_source_and_index,
-    retrieve_chunks,
-)
+from vector_store import get_chunk, retrieve_chunks
 
 
 def select_relevant_chunks(results):
@@ -33,7 +34,7 @@ def select_relevant_chunks(results):
     return selected
 
 
-def expand_with_neighbor_chunks(results):
+def expand_with_neighbor_chunks(visitor_id, results):
     """
     For every retrieved chunk, include nearby chunks from
     the same document to restore surrounding context.
@@ -42,7 +43,7 @@ def expand_with_neighbor_chunks(results):
     seen = set()
 
     for distance, record in results:
-        source = record["source"]
+        doc_id = record["doc_id"]
         chunk_index = record["chunk_index"]
 
         start_index = max(
@@ -56,15 +57,16 @@ def expand_with_neighbor_chunks(results):
             start_index,
             end_index + 1,
         ):
-            key = (source, neighbor_index)
+            key = (doc_id, neighbor_index)
 
             if key in seen:
                 continue
 
             seen.add(key)
 
-            neighbor_record = get_chunk_by_source_and_index(
-                source,
+            neighbor_record = get_chunk(
+                visitor_id,
+                doc_id,
                 neighbor_index,
             )
 
@@ -107,20 +109,20 @@ def group_contiguous_chunks(results):
     if not results:
         return []
 
-    # First group all chunks by their source document.
-    by_source = {}
+    # First group all chunks by their document.
+    by_document = {}
 
     for distance, record in results:
-        source = record["source"]
+        doc_id = record["doc_id"]
 
-        if source not in by_source:
-            by_source[source] = []
+        if doc_id not in by_document:
+            by_document[doc_id] = []
 
-        by_source[source].append((distance, record))
+        by_document[doc_id].append((distance, record))
 
     context_blocks = []
 
-    for source, source_results in by_source.items():
+    for source_results in by_document.values():
 
         # Similarity search gives us relevance order.
         # To find neighboring chunks, restore document order.
@@ -178,22 +180,32 @@ def limit_context_size(context_blocks):
     return limited
 
 
-def retrieve_context(question: str) -> list[ContextBlock]:
+def retrieve_context(visitor_id: str, question: str) -> list[ContextBlock]:
     """
     Public interface for the retrieval pipeline.
 
+    Only the given visitor's unexpired documents are searched.
     The API layer should call this function rather than
     knowing about the individual retrieval stages.
     """
 
-    candidates = retrieve_chunks(
-        question,
-        limit=RETRIEVAL_CANDIDATES,
-    )
+    if not storage.has_documents(visitor_id):
+        return []
 
-    selected = select_relevant_chunks(candidates)
+    # Embed outside the lock: it is a slow network call.
+    question_embedding = embed_text(question)
 
-    expanded = expand_with_neighbor_chunks(selected)
+    with storage.LOCK:
+        candidates = retrieve_chunks(
+            visitor_id,
+            question_embedding,
+            newer_than=clock.now() - config.upload_ttl(),
+            limit=RETRIEVAL_CANDIDATES,
+        )
+
+        selected = select_relevant_chunks(candidates)
+
+        expanded = expand_with_neighbor_chunks(visitor_id, selected)
 
     context_blocks = group_contiguous_chunks(expanded)
 

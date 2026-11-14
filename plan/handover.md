@@ -1,8 +1,10 @@
 # Handover
 
-- **Last updated:** plan written, nothing built yet.
-- **Done so far:** nothing from this plan. Already built and proven earlier: landing page and demo layout (checked by build, lint and screenshots).
-- **Next up:** 1.1, save the current UI work as a commit.
-- **Blocked or broken:** nothing.
-- **Changes proposed to the plan:** none.
-- **How to run the checks:** `cd frontend; npm run lint; npm run build`. Backend tests will be `pytest backend/tests` once part 2.1 adds them.
+- **Last updated:** after part 2.1.
+- **Done so far:** 1.1 (commit 64c5aa6), 2.1 (per-visitor storage, expiry, sweeper, fake OpenAI module, 16 tests green).
+- **Next up:** 2.2 upload limits.
+- **Blocked or broken:** nothing. `app.py`, `reindex.py`, `display.py` are broken on purpose until 4.2 (they import removed functions).
+- **Changes proposed to the plan:** none yet.
+- **Python version:** the project `.venv` runs Python 3.14.3 (system Python is 3.13.0). Recorded for README and CI.
+- **How to run the checks:** from repo root: `.venv\Scripts\python.exe -m pytest` (needs `pytest` installed); `cd frontend; npm run lint; npm run build`.
+- **Notes:** `FAKE_OPENAI=1` switch is already in place (config.fake_openai); the RENDER guard comes in 2.4. Upload endpoint is a plain `def` (threadpool). Expiry is read-time plus sweeper every 60 s.

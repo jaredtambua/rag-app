@@ -1,7 +1,9 @@
 import json
 
-from clients import client
+import config
+from clients import get_client
 from config import CHAT_MODEL
+from fakes import fake_answer
 from models import ContextBlock
 
 
@@ -44,11 +46,10 @@ def generate_answer(
             "citations": [],
         }
 
-    context = build_context(context_blocks)
+    if config.fake_openai():
+        return fake_answer(question, context_blocks)
 
-    print("\n--- CONTEXT SENT TO LLM ---")
-    print(context)
-    print("--- END CONTEXT ---\n")
+    context = build_context(context_blocks)
 
     prompt = f"""
 You are a document assistant. Answer the user's question using only
@@ -114,7 +115,7 @@ Question:
 {question}
 """
 
-    response = client.chat.completions.create(
+    response = get_client().chat.completions.create(
         model=CHAT_MODEL,
         messages=[
             {

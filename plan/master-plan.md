@@ -52,8 +52,8 @@ Decisions (made with the user, do not reopen):
 
 ## 5. Build order
 
-- [ ] 1.1 Save the current UI work as a commit
-- [ ] 2.1 Per-visitor private storage with 30-minute expiry
+- [x] 1.1 Save the current UI work as a commit
+- [x] 2.1 Per-visitor private storage with 30-minute expiry
 - [ ] 2.2 Upload limits and safe file handling
 - [ ] 2.3 Question limits and rate limiting
 - [ ] 2.4 Backend tidy: errors, logging, batching, hardening, settings
