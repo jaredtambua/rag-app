@@ -3,37 +3,26 @@ __pycache__/
 .venv/
 .pytest_cache/
 
-# environment
+# environment (never commit real values; the .env.example files are tracked)
 .env
 
-# chroma database
+# local data from the earlier design (kept on disk, never committed)
 vectorstore/
-
-
-# uploaded documents
 backend/documents/*.pdf
 !backend/documents/.gitkeep
-
-# generated vector database
 backend/vectorstore/
+
+# runtime visitor data: temporary uploads and the search index
+backend/data/
 
 # react
 frontend/node_modules/
 frontend/dist/
 
-# vscode
+# editor and operating system
 .vscode/
-
-# operating system
 .DS_Store
 Thumbs.db
 
-# runtime RAG data
-backend/vectorstore/
-
-
 # private design working material
 design/
-
-# runtime visitor data (temporary uploads and index)
-backend/data/
