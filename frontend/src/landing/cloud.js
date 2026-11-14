@@ -7,9 +7,9 @@ import { createSignals } from "./signals.js";
 import { STOP_SHAPES, stopUnit } from "./stops.js";
 
 const COLORS = ["#8052ff", "#ffb829", "#15846e", "#d94fd0", "#4f8dff"];
-/* where the cloud sits at each stop: [centre x, centre y, size], as fractions of the screen */
-const RECT_DESKTOP = [[.72, .5, .9], [.5, .55, .72], [.27, .52, .7], [.72, .5, .9], [.72, .5, .9], [.5, .34, .55]];
-const RECT_PHONE = [[.5, .27, .85], [.5, .28, .9], [.5, .24, .72], [.5, .27, .88], [.5, .27, .9], [.5, .26, .7]];
+/* where the cloud sits at each stop: [centre x, centre y, size, widest as a share of the width, tallest as a share of the height], as fractions of the screen */
+const RECT_DESKTOP = [[.72, .5, .9, 1, 1], [.29, .52, .8, .56, 1], [.5, .5, .94, .72, 1], [.29, .5, .8, .56, 1], [.5, .34, .55, 1, 1]];
+const RECT_PHONE = [[.5, .27, .85, 1, .5], [.5, .3, 1, 1, .56], [.5, .5, 1.2, 1.2, .64], [.5, .23, .9, 1, .4], [.5, .26, .7, 1, .4]];
 const LAST = STOP_SHAPES.length - 1;
 
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -59,7 +59,7 @@ export function startCloud(canvas, ambientCanvas) {
   let W, H, phone, unit, raf = 0;
 
   function resize() {
-    W = window.innerWidth; H = window.innerHeight; phone = W <= 760;
+    W = window.innerWidth; H = window.innerHeight; phone = W <= 900;
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     unit = stopUnit();
   }
@@ -83,7 +83,8 @@ export function startCloud(canvas, ambientCanvas) {
     const m = still ? (u < .5 ? 0 : 1) : u;
     const R = phone ? RECT_PHONE : RECT_DESKTOP, ra = R[i], rb = R[i + 1];
     const cx = (ra[0] + (rb[0] - ra[0]) * m) * W, cy = (ra[1] + (rb[1] - ra[1]) * m) * H;
-    const side = (ra[2] + (rb[2] - ra[2]) * m) * Math.min(W, H);
+    const lerp = (k) => ra[k] + (rb[k] - ra[k]) * m;
+    const side = Math.min(lerp(2) * Math.min(W, H), lerp(3) * W, lerp(4) * H);
     if (t0 === null) t0 = now;
     const A = shapes[i], B = shapes[i + 1], D = side * 2.4, Zr = side * .3;
     const brainWeight = still ? 0 : clamp(1 - p * 4, 0, 1);

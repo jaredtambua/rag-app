@@ -23,34 +23,31 @@
 
 /* the words for each stop: fixed on screen, faded in and out by the layer hook */
 .scene-text { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0; visibility: hidden; padding: 0 var(--gutter); }
-.scene-text .copy, .scene-text .head, .scene-text .small, .scene-text .cite { position: absolute; }
+.scene-text .copy { position: absolute; }
 .scene-text.on a, .scene-text.on button, .scene-text.on p, .scene-text.on h1, .scene-text.on h2 { pointer-events: auto; }
 .scene-text .btn { margin-top: var(--s5); }
 
 .t0 .copy { top: 50%; left: var(--gutter); width: min(42vw, 560px); margin-top: -2vh; transform: translateY(-50%); }
-.t1 .head { left: var(--gutter); top: 14vh; width: 70vw; font-size: clamp(36px, 3.9vw, 64px); line-height: 1.05; }
-.t1 .small { right: var(--gutter); bottom: 9vh; width: min(26vw, 340px); margin: 0; text-align: right; }
-.t1 .small .lede { margin: 0; }
-.note { margin-top: var(--s2); font-size: var(--text-small); color: var(--ash); }
+/* stops 1 and 3: the cloud sits on the left, the words in a column on the right, both edges on the page gutter */
+.t1 .copy, .t3 .copy { left: 60vw; right: var(--gutter); top: 50%; transform: translateY(-50%); max-width: 480px; }
+.t1 .h-md, .t3 .h-md { text-wrap: balance; }
+.t3 .h-md { font-size: clamp(28px, 3.3vw, 48px); line-height: 1.08; }
+.note { margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--line); font-size: var(--text-small); color: var(--ash); }
 
-/* the example answer mirrors the demo: question bubble, short answer, source card */
-.t2 .cite { left: 54vw; right: var(--gutter); top: 50%; transform: translateY(-50%); max-width: 560px; }
-.t2 .example { margin: var(--s4) 0 0; display: grid; gap: var(--s2); }
-.tag { font-size: 12px; font-weight: 600; letter-spacing: 0.025em; text-transform: uppercase; color: var(--ash); }
-.ex-q { justify-self: end; max-width: 85%; padding: 10px 16px; background: var(--iris-deep); border: 1px solid var(--iris); border-radius: var(--r-card) var(--r-card) 6px var(--r-card); font-size: 15px; font-weight: 400; color: var(--white); }
-.ex-a { padding: var(--s3); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); font-size: 16px; font-weight: 400; color: #e6e6e6; }
-.ex-source { display: grid; gap: 6px; padding: var(--s3); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); }
-.ex-source-head { display: flex; align-items: center; justify-content: space-between; color: var(--saffron); }
-.ex-pill { padding: 2px 10px; border-radius: var(--r-pill); background: var(--iris-deep); color: var(--white); font-size: 12px; font-weight: 600; }
-.ex-name { font-size: 14px; font-weight: 600; color: var(--white); }
-.ex-quote { font-size: 14px; font-style: italic; color: var(--mist); }
-.t3 .copy { left: var(--gutter); bottom: 13vh; width: min(38vw, 520px); }
-.t5 .copy { left: 0; right: 0; bottom: calc(8vh + 56px); text-align: center; padding: 0 var(--s4); }
-.t5 .lede { margin-left: auto; margin-right: auto; max-width: 600px; }
-.dots { display: flex; margin: var(--s4) 0 0 -14px; }
-.dot { width: 44px; height: 44px; background: none; border: 0; cursor: pointer; display: grid; place-items: center; }
-.dot::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #3b3b3b; transition: background var(--t-fast), transform var(--t-fast); }
-.dot[aria-current="true"]::after { background: var(--iris); transform: scale(1.25); }
+/* stop 3: the two audiences as a plain list divided by hairlines */
+.audiences { list-style: none; margin: var(--s4) 0 0; padding: 0; }
+.audiences li { padding: var(--s2) 0; border-top: 1px solid var(--line); }
+.audiences li:last-child { border-bottom: 1px solid var(--line); }
+.who { font-size: 18px; font-weight: 600; color: var(--white); }
+.what { margin-top: 2px; color: var(--mist); font-size: 15px; }
+
+/* stop 2: the ring is centred on the page and the words sit in its hole, sized with the ring */
+.t2 .copy { --w: min(440px, 46vmin, 34vw); left: 50%; top: 50%; width: var(--w); max-width: none; transform: translate(-50%, -50%); text-align: center; }
+.t2 .h-md { font-size: max(24px, calc(var(--w) / 10.4)); line-height: 1.12; text-wrap: balance; }
+.t2 .lede { margin: var(--s3) auto 0; max-width: none; font-size: max(15px, calc(var(--w) / 23)); text-wrap: balance; }
+
+.t4 .copy { left: 0; right: 0; bottom: calc(8vh + 56px); text-align: center; padding: 0 var(--s4); }
+.t4 .lede { margin-left: auto; margin-right: auto; max-width: 600px; }
 
 /* previous / next */
 .section-controls { position: fixed; z-index: 11; bottom: max(18px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px; border: 1px solid #444; border-radius: var(--r-pill); background: #101010; white-space: nowrap; }
@@ -59,28 +56,34 @@
 .section-controls button[aria-disabled="true"] { color: var(--ash); cursor: default; }
 .section-controls .position { min-width: 40px; text-align: center; color: var(--mist); font-size: 13px; font-weight: 400; }
 
-/* phones: the cloud sits in the top half and the words below it */
+/* tablets and phones: the cloud sits in the top part and the words below it */
+@media (max-width: 900px) {
+  .scene-text { padding: 0; }
+  .scene-text .copy, .t1 .copy, .t3 .copy { left: var(--s4); right: var(--s4); top: auto; bottom: calc(7vh + 64px); width: auto; max-width: 560px; margin: 0; transform: none; text-align: left; }
+  .t0 .copy { top: auto; bottom: calc(6vh + 64px); margin: 0; }
+  .t1 .h-md { font-size: clamp(28px, 7vw, 40px); }
+  .t3 .h-md { font-size: clamp(24px, 6.4vw, 38px); }
+  .t1 .lede { margin-top: var(--s2); }
+  .note { margin-top: var(--s2); padding-top: var(--s2); }
+  .audiences { margin-top: var(--s3); }
+  .audiences li { padding: 8px 0; }
+  .who { font-size: 16px; }
+  .what { font-size: 14px; margin-top: 1px; line-height: 1.35; }
+  .t3 .copy { bottom: calc(5vh + 64px); }
+  .t2 .copy { --w: max(216px, min(55vmin, 28vh)); left: 50%; top: 50%; right: auto; bottom: auto; width: var(--w); max-width: none; transform: translate(-50%, -50%); text-align: center; }
+  .t2 .lede { margin-top: var(--s2); }
+  .t4 .copy { text-align: left; padding: 0; }
+  .t4 .lede { margin-left: 0; }
+  .lede { font-size: 16px; margin-top: var(--s3); }
+  .h-lg { font-size: clamp(40px, 11vw, 56px); }
+}
+@media (min-width: 600px) and (max-width: 900px) { .t1 .copy { bottom: calc(12vh + 64px); } .t3 .copy { bottom: calc(9vh + 64px); } }
 @media (max-width: 760px) {
   .nav-links { display: none; }
   .nav { padding: var(--s3) var(--s4); }
   .nav .btn { padding: 12px 16px; font-size: 12px; }
-  .scene-text { padding: 0; }
-  .scene-text .copy, .scene-text .head, .scene-text .small, .scene-text .cite { left: var(--s4); right: var(--s4); top: auto; bottom: calc(7vh + 64px); width: auto; margin: 0; transform: none; text-align: left; }
-  .t0 .copy { top: auto; bottom: calc(6vh + 64px); margin: 0; }
-  .t1 .head { bottom: calc(7vh + 190px); font-size: clamp(36px, 10vw, 56px); }
-  .t1 .small { bottom: calc(7vh + 64px); text-align: left; }
-  .t2 .cite { bottom: calc(5vh + 64px); max-width: none; }
-  .t2 .example { margin-top: var(--s2); gap: 8px; }
-  .t2 h2 { font-size: clamp(28px, 8vw, 34px); }
-  .ex-a, .ex-source { padding: var(--s2) var(--s3); }
-  .ex-a { font-size: 15px; }
-  .ex-quote { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .t5 .copy { text-align: left; padding: 0; }
-  .t5 .lede { margin-left: 0; }
-  .lede { font-size: 16px; margin-top: var(--s3); }
-  .h-lg { font-size: clamp(40px, 11vw, 56px); }
 }
 @media (max-width: 400px) { .section-controls { gap: 8px; } .section-controls button { padding-inline: 12px; } }
 
 /* short screens: tighten the words so they never run into the cloud */
-@media (max-height: 640px) and (min-width: 761px) { .lede { margin-top: var(--s3); } .t0 .copy { margin-top: 0; } }
+@media (max-height: 640px) and (min-width: 901px) { .lede { margin-top: var(--s3); } .t0 .copy { margin-top: 0; } }

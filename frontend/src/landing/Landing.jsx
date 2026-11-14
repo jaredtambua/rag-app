@@ -4,40 +4,23 @@ import DemoLink from "../components/DemoLink.jsx";
 import { startCloud } from "./cloud.js";
 import { STOP_COUNT } from "./stops.js";
 import { useSceneLayers } from "./useSceneLayers.js";
-import { FileIcon } from "../demo/icons.jsx";
 import { warmUpServer } from "../demo/useRagDemo.js";
 import { useStopNavigation } from "./useStopNavigation.js";
 import "./landing.css";
 
-/* the stops each link covers: how it works = knowledge base and citations, use cases = the two examples, privacy = the last scene */
+/* the stops each link covers: how it works = knowledge base and citations, use cases = the quotes scene, privacy = the last scene */
 const NAV_LINKS = [
   { label: "How it works", stop: 1, stops: "1-2" },
-  { label: "Use cases", stop: 3, stops: "3-4" },
-  { label: "Privacy", stop: 5, stops: "5-5" },
+  { label: "Use cases", stop: 3, stops: "3-3" },
+  { label: "Privacy", stop: 4, stops: "4-4" },
 ];
 
 const USE_CASES = [
-  { who: "Lawyers", title: "Find the exact quote.", text: "Search every contract and see the page it came from." },
-  { who: "Scientists", title: "Find the exact scientific remark.", text: "Ask across your papers and get the passage, with its page." },
+  { who: "Lawyers", text: "Search every contract and see the page it came from." },
+  { who: "Scientists", text: "Ask across your papers and get the passage, with its page." },
+  { who: "Consultants", text: "Find the exact line in a client report, with its page." },
+  { who: "New hires", text: "Ask what a company term means and get the page that explains it." },
 ];
-const FIRST_USE_STOP = 3;
-
-function Dots({ active, onSelect }) {
-  return (
-    <div className="dots">
-      {USE_CASES.map((_, i) => (
-        <button
-          key={i}
-          className="dot"
-          type="button"
-          aria-label={`Show slide ${i + 1} of ${USE_CASES.length}`}
-          aria-current={i === active ? "true" : undefined}
-          onClick={() => onSelect(FIRST_USE_STOP + i)}
-        />
-      ))}
-    </div>
-  );
-}
 
 export default function Landing({ onNavigate }) {
   const cloudRef = useRef(null);
@@ -85,44 +68,35 @@ export default function Landing({ onNavigate }) {
         </div>
 
         <div className="scene-text t1" data-stop="1">
-          <h2 className="head">One knowledge base for you or your team.</h2>
-          <div className="small">
+          <div className="copy">
+            <h2 className="h-md">One knowledge base for you or your team.</h2>
             <p className="lede">Add any documents, related or not. Tessel finds the answer.</p>
             <p className="note">The demo is a private, temporary preview.</p>
           </div>
         </div>
 
         <div className="scene-text t2" data-stop="2">
-          <div className="cite">
+          <div className="copy">
             <h2 className="h-md">Answers cite the pages they used.</h2>
-            <figure className="example" aria-label="Example of an answer with its source">
-              <figcaption className="tag">Example</figcaption>
-              <p className="ex-q">How much notice is needed to end the agreement?</p>
-              <p className="ex-a">Either party can end the agreement with 60 days&rsquo; written notice.</p>
-              <div className="ex-source">
-                <div className="ex-source-head">
-                  <FileIcon size={16} />
-                  <span className="ex-pill">Page 9</span>
-                </div>
-                <p className="ex-name">services-agreement.pdf</p>
-                <p className="ex-quote">&ldquo;Either party may terminate this Agreement by giving the other party not less than sixty (60) days&rsquo; prior written notice.&rdquo;</p>
-              </div>
-            </figure>
+            <p className="lede">Every answer shows the file and page it came from.</p>
           </div>
         </div>
 
-        {USE_CASES.map((c, i) => (
-          <div className="scene-text t3" data-stop={FIRST_USE_STOP + i} key={c.who}>
-            <div className="copy">
-              <p className="eyebrow">{c.who}</p>
-              <h2 className="h-md">{c.title}</h2>
-              <p className="lede">{c.text}</p>
-              <Dots active={i} onSelect={goTo} />
-            </div>
+        <div className="scene-text t3" data-stop="3">
+          <div className="copy">
+            <h2 className="h-md">Find the exact quote. Or explain your own jargon.</h2>
+            <ul className="audiences">
+              {USE_CASES.map((c) => (
+                <li key={c.who}>
+                  <p className="who">{c.who}</p>
+                  <p className="what">{c.text}</p>
+                </li>
+              ))}
+            </ul>
           </div>
-        ))}
+        </div>
 
-        <div className="scene-text t5" data-stop="5">
+        <div className="scene-text t4" data-stop="4">
           <div className="copy">
             <h2 className="h-md">Try it with your own files.</h2>
             <p className="lede">Your files stay private to you and are deleted after 30 minutes. Their text is sent to an AI service to build the index and write answers.</p>

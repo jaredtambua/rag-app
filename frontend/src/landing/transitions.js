@@ -1,4 +1,4 @@
-/* Five reversible paths, one between each pair of neighbouring stops. Progress comes from the section position, not wall-clock time. */
+/* Four reversible paths, one between each pair of neighbouring stops. Progress comes from the section position, not wall-clock time. */
 export function position(edge, t, ax, ay, az, bx, by, bz, particle, out) {
     if (t <= 0) { out.x = ax; out.y = ay; out.z = az; out.spin = 0; return; }
     if (t >= 1) { out.x = bx; out.y = by; out.z = bz; out.spin = 0; return; }
@@ -10,7 +10,7 @@ export function position(edge, t, ax, ay, az, bx, by, bz, particle, out) {
     var x = ax + (bx - ax) * blend;
     var y = ay + (by - ay) * blend;
     var z = az + (bz - az) * blend;
-    var spin = 0, angle, radius, turn;
+    var spin = 0, angle, radius;
     switch (edge) {
       case 0: // Brain to network: split into five branching streams that settle into linked nodes.
         angle = Math.floor(phase / (Math.PI * 2) * 5) * Math.PI * 2 / 5;
@@ -33,17 +33,7 @@ export function position(edge, t, ax, ay, az, bx, by, bz, particle, out) {
         z += envelope * Math.cos(u * Math.PI * 2 + phase) * .32;
         spin = envelope * Math.sin(u * Math.PI * 2 + lane);
         break;
-      case 3: // Grid to spiral: wind the entire field into a travelling vortex.
-        turn = envelope * Math.PI * 1.35;
-        radius = 1 + envelope * .65;
-        x = (ax + (bx - ax) * blend) * Math.cos(turn) - y * Math.sin(turn);
-        y = (ax + (bx - ax) * blend) * Math.sin(turn) + y * Math.cos(turn);
-        x = x * radius + envelope * Math.cos(phase + u * 7) * .28;
-        y = y * radius + envelope * Math.sin(phase + u * 7) * .28;
-        z += envelope * Math.sin(phase + u * Math.PI * 2) * .55;
-        spin = turn;
-        break;
-      case 4: // Spiral to lock: draw the strands tightly inward, then assemble.
+      case 3: // Grid to lock: draw the strands tightly inward, then assemble.
         x *= 1 - envelope * .88;
         y *= 1 - envelope * .88;
         z *= 1 - envelope * .88;

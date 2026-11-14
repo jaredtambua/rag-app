@@ -74,7 +74,6 @@
     var p = side === 0 ? [t, -h] : side === 1 ? [h, t] : side === 2 ? [t, h] : [-h, t];
     return [cx + p[0], cy + p[1], rnd(-.02, .02)];
   }
-  function spiral() { var t = Math.pow(Math.random(), .7), r = .04 + .44 * t, a = t * 13 + (Math.random() < .5 ? 0 : Math.PI); return [r * Math.cos(a), r * Math.sin(a) * .9, rnd(-.04, .04) * (1 - t) + rnd(-.01, .01)]; }
   var NET = (function () {
     var s = 7, nodes = [], edges = [], i, v;
     function r() { s = (s * 16807) % 2147483647; return s / 2147483647; }
@@ -93,7 +92,7 @@
   function scatter() { return [rnd(-1.1, 1.1), rnd(-.9, .9), rnd(-.8, .8)]; }
   var GEN = {
     "brain": function () { return brain(1); }, "brain-s": function () { return brain(.78); },
-    "padlock": lockAndKey, "ring": ring, "grid": grid, "spiral": spiral, "network": network, "scatter": scatter
+    "padlock": lockAndKey, "ring": ring, "grid": grid, "network": network, "scatter": scatter
   };
 export const TesselShapes = {
     sample: function (name, count) {
