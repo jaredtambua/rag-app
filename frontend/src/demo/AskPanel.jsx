@@ -52,7 +52,7 @@ export default function AskPanel({ question, setQuestion, askQuestion, isAsking,
             ? (lockedHint || "Questions open up once a document is added.")
             : over
               ? MESSAGES.questionTooLong
-              : `Enter to send, Shift+Enter for a new line. Up to ${LIMITS.questionsPerHour} questions an hour.`}
+              : `Enter to send, Shift+Enter for a new line. Up to ${LIMITS.questionsPerHour} questions an hour. Follow-up questions work: the last ${LIMITS.sentHistoryTurns} questions are remembered until you refresh or clear history.`}
         </span>
         {!locked && nearLimit && <span className={`counter${over ? " is-over" : ""}`}>{length} / {LIMITS.questionChars}</span>}
       </p>

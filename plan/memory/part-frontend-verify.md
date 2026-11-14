@@ -3,7 +3,7 @@
 Front end files are in `frontend/src/demo/`: `useRagDemo.js` (all state and API calls; the `ask` function and the `thread` list), `limits.js`, `AskPanel.jsx` (the hint line), `Thread.jsx`, `Workspace.jsx`. Run from `frontend/`: `npm run lint`, `npm run build`.
 
 ### 2.1 Front end: send the last 5 turns
-- Status: not started
+- Status: done
 - Does: every question the visitor sends also carries their last 5 successful question-and-answer pairs, so follow-ups work. The visitor sees a short hint that follow-ups are understood, and Clear history truly forgets.
 - Does not: no storage in the browser (no local storage or cookies for history), no change to the 20-turn on-screen thread, to what is displayed, or to the removed-document note.
 - Needs: 1.3
@@ -15,7 +15,7 @@ Front end files are in `frontend/src/demo/`: `useRagDemo.js` (all state and API 
 - If it goes wrong: with an empty thread the body has `history: []`; never block a question because of history.
 
 ### 3.1 Browser check with a mocked back end
-- Status: not started
+- Status: done (script in the scratchpad, not in the repo; mobile hint un-hidden, see handover)
 - Does: proves in a real browser, with a stand-in back end, that the page sends the right history and forgets it on Clear history.
 - Does not: no real back end, no real OpenAI, no quality check of real answers.
 - Needs: 2.1

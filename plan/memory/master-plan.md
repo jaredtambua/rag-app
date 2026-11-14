@@ -111,8 +111,8 @@ Accounts, history that survives a refresh, and project folders are possible late
 - [x] 1.1 Back end: history field and validation
 - [x] 1.2 Fakes: rewrite and history stand-ins
 - [x] 1.3 Back end: rewrite step and safe prompts
-- [ ] 2.1 Front end: send the last 5 turns
-- [ ] 3.1 Browser check with a mocked back end
+- [x] 2.1 Front end: send the last 5 turns
+- [x] 3.1 Browser check with a mocked back end
 - [ ] 3.2 Independent review and repairs
 - [ ] 3.3 Final local check (stop before pushing)
 

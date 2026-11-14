@@ -7,6 +7,8 @@ export const LIMITS = {
   minutes: 30,
   questionChars: 500,
   questionsPerHour: 20,
+  sentHistoryTurns: 5, /* earlier answered turns sent with each question, so follow-ups work */
+  historyAnswerChars: 600, /* each earlier answer is cut to this many characters before it is sent */
   historyTurns: 20, /* questions kept on screen; the oldest drop off first */
 };
 

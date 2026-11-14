@@ -71,6 +71,18 @@ function addTurn(items, turn) {
   return list;
 }
 
+/* The earlier turns that go with a question: the last few that were answered, oldest first, never the turn being asked.
+   Failed and pending turns and removal notes are skipped. Memory only: nothing is stored. */
+function sentHistory(items, excludeId) {
+  return items
+    .filter((item) => item.kind === "turn" && item.status === "done" && item.id !== excludeId)
+    .slice(-LIMITS.sentHistoryTurns)
+    .map((item) => ({
+      question: item.question.trim(),
+      answer: Array.from(item.answer).slice(0, LIMITS.historyAnswerChars).join(""),
+    }));
+}
+
 /* one note per removal moment, and only when there is something earlier for it to refer to */
 function addRemovalNote(items, id) {
   if (!items.some((item) => item.kind === "turn") || items[items.length - 1].kind === "note") return items;
@@ -86,7 +98,7 @@ export function useRagDemo() {
   const connectRun = useRef(0);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [question, setQuestion] = useState("");
-  /* The conversation shown on screen, oldest first. Each answer is still independent: earlier turns are never sent to the server.
+  /* The conversation shown on screen, oldest first. The last few answered turns are sent with each question so follow-ups make sense.
      Items are turns ({ id, kind: "turn", question, status: pending | done | failed, answer, citations, message })
      or notes ({ id, kind: "note" }) marking a moment a document was removed. Kept in memory only. */
   const [thread, setThread] = useState([]);
@@ -268,6 +280,7 @@ export function useRagDemo() {
   /* Sends one question and records it in the thread. `source` is "box" (typed) or "retry" (Try again on a failed turn). */
   async function ask(text, source, replaceId) {
     const id = ++nextId.current;
+    const history = sentHistory(thread, replaceId);
     setError("");
     setNotice("");
     if (source === "box") setQuestion("");
@@ -280,7 +293,7 @@ export function useRagDemo() {
       const response = await request("/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: text }),
+        body: JSON.stringify({ question: text, history }),
       });
 
       if (!response.ok) {

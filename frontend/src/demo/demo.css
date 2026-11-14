@@ -207,8 +207,8 @@
   .thread-bar { padding: 0 var(--s3); }
   .thread-list { gap: var(--s5); }
   .dock { padding: var(--s2) var(--s3) var(--s2); }
-  .composer-wrap .hint { display: none; }
-  .composer-wrap .hint.is-alert { display: flex; padding: 0 var(--s2); }
+  /* kept visible on phones: it tells people follow-ups are remembered */
+  .composer-wrap .hint { padding: 0 var(--s2); font-size: 12px; line-height: 1.35; margin-top: 6px; }
 }
 @media (max-width: 480px) {
   .docs-btn .label { display: none; }

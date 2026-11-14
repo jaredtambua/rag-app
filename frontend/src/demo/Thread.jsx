@@ -14,7 +14,7 @@ export function ThreadBar({ count, disabled, onClear }) {
   );
 }
 
-/* The conversation, oldest first. It is display only: each answer is worked out from the question alone. */
+/* The conversation, oldest first. It is display only; the last few answered turns are also sent with each new question (see useRagDemo.js). */
 export default function Thread({ items, isAsking, onRetry, onAddPdf, noDocuments }) {
   const latestRef = useRef(null);
   const turns = items.filter((item) => item.kind === "turn");
