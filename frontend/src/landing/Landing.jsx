@@ -4,20 +4,21 @@ import DemoLink from "../components/DemoLink.jsx";
 import { startCloud } from "./cloud.js";
 import { STOP_COUNT } from "./stops.js";
 import { useSceneLayers } from "./useSceneLayers.js";
+import { FileIcon } from "../demo/icons.jsx";
 import { warmUpServer } from "../demo/useRagDemo.js";
 import { useStopNavigation } from "./useStopNavigation.js";
 import "./landing.css";
 
+/* the stops each link covers: how it works = knowledge base and citations, use cases = the two examples, privacy = the last scene */
 const NAV_LINKS = [
   { label: "How it works", stop: 1, stops: "1-2" },
-  { label: "Use cases", stop: 3, stops: "3-5" },
-  { label: "Privacy", stop: 6, stops: "6-6" },
+  { label: "Use cases", stop: 3, stops: "3-4" },
+  { label: "Privacy", stop: 5, stops: "5-5" },
 ];
 
 const USE_CASES = [
-  { who: "Lawyers", title: "Find the clause across your contracts.", text: "And see exactly where it came from." },
-  { who: "Researchers", title: "Ask a pile of papers one question.", text: "Get the answer with the passage attached." },
-  { who: "Small teams", title: "Make your team’s documents answer back.", text: "Turn the folder nobody can search into something that can." },
+  { who: "Lawyers", title: "Find the exact quote.", text: "Search every contract and see the page it came from." },
+  { who: "Scientists", title: "Find the exact scientific remark.", text: "Ask across your papers and get the passage, with its page." },
 ];
 const FIRST_USE_STOP = 3;
 
@@ -84,16 +85,29 @@ export default function Landing({ onNavigate }) {
         </div>
 
         <div className="scene-text t1" data-stop="1">
-          <h2 className="head">Create your personal knowledge base.</h2>
-          <p className="small lede">Add the files you already have, then ask in plain words. This is a demo: Tessel as a product would keep your knowledge base, built from your own documents.</p>
+          <h2 className="head">One knowledge base for you or your team.</h2>
+          <div className="small">
+            <p className="lede">Add any documents, related or not. Tessel finds the answer.</p>
+            <p className="note">The demo is a private, temporary preview.</p>
+          </div>
         </div>
 
         <div className="scene-text t2" data-stop="2">
-          <h2 className="head h-md">Answers cite the pages they used.</h2>
-          <div className="passage">
-            <p className="tag">Example</p>
-            <p className="where">Page 14, clause 7.2</p>
-            <p className="quote">Either party may end this agreement with sixty days&rsquo; written notice.</p>
+          <div className="cite">
+            <h2 className="h-md">Answers cite the pages they used.</h2>
+            <figure className="example" aria-label="Example of an answer with its source">
+              <figcaption className="tag">Example</figcaption>
+              <p className="ex-q">How much notice is needed to end the agreement?</p>
+              <p className="ex-a">Either party can end the agreement with 60 days&rsquo; written notice.</p>
+              <div className="ex-source">
+                <div className="ex-source-head">
+                  <FileIcon size={16} />
+                  <span className="ex-pill">Page 9</span>
+                </div>
+                <p className="ex-name">services-agreement.pdf</p>
+                <p className="ex-quote">&ldquo;Either party may terminate this Agreement by giving the other party not less than sixty (60) days&rsquo; prior written notice.&rdquo;</p>
+              </div>
+            </figure>
           </div>
         </div>
 
@@ -108,29 +122,17 @@ export default function Landing({ onNavigate }) {
           </div>
         ))}
 
-        <div className="scene-text t6" data-stop="6">
+        <div className="scene-text t5" data-stop="5">
           <div className="copy">
-            <h2 className="h-md">Keep it to files you can share.</h2>
-            <p className="lede">Uploads are private to your browser and deleted 30 minutes after you add them. Their text is sent to an AI service to build the search index and write answers.</p>
-          </div>
-        </div>
-
-        <div className="scene-text t7" data-stop="7">
-          <div className="copy">
-            <h2 className="h-lg">Try it with your own files.</h2>
-            <p className="lede">The demo is live. Upload a PDF you know well, ask a question and see the page the answer came from.</p>
+            <h2 className="h-md">Try it with your own files.</h2>
+            <p className="lede">Your files stay private to you and are deleted after 30 minutes. Their text is sent to an AI service to build the index and write answers.</p>
             <DemoLink onNavigate={onNavigate} />
           </div>
         </div>
 
-        {/* the scrolling track: one screen per stop (three for the use-case slides) */}
+        {/* the scrolling track: one screen per stop */}
         <div className="track" aria-hidden="true">
-          <div className="spacer" id="top" />
-          <div className="spacer" />
-          <div className="spacer" />
-          <div className="spacer spacer-3" />
-          <div className="spacer" />
-          <div className="spacer" />
+          {Array.from({ length: STOP_COUNT }, (_, i) => <div className="spacer" id={i === 0 ? "top" : undefined} key={i} />)}
         </div>
       </main>
 

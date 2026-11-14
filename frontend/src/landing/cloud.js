@@ -8,8 +8,8 @@ import { STOP_SHAPES, stopUnit } from "./stops.js";
 
 const COLORS = ["#8052ff", "#ffb829", "#15846e", "#d94fd0", "#4f8dff"];
 /* where the cloud sits at each stop: [centre x, centre y, size], as fractions of the screen */
-const RECT_DESKTOP = [[.72, .5, .9], [.5, .5, 1.1], [.5, .6, .64], [.72, .5, .9], [.72, .5, .9], [.72, .5, .9], [.5, .38, .5], [.77, .5, .65]];
-const RECT_PHONE = [[.5, .27, .85], [.5, .3, 1], [.5, .3, .8], [.5, .27, .88], [.5, .27, .9], [.5, .27, .9], [.5, .27, .75], [.5, .27, .85]];
+const RECT_DESKTOP = [[.72, .5, .9], [.5, .55, .72], [.27, .52, .7], [.72, .5, .9], [.72, .5, .9], [.5, .34, .55]];
+const RECT_PHONE = [[.5, .27, .85], [.5, .28, .9], [.5, .24, .72], [.5, .27, .88], [.5, .27, .9], [.5, .26, .7]];
 const LAST = STOP_SHAPES.length - 1;
 
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -73,7 +73,6 @@ export function startCloud(canvas, ambientCanvas) {
     P.push({ s: 1.8 + Math.random() * 2.4, r: Math.random() * 6.283, c: (Math.random() * COLORS.length) | 0, ph: Math.random() * 6.283, d: Math.random() * .35, w: [rnd(-1, 1), rnd(-1, 1), rnd(-1, 1)] });
   }
   const brainSignals = createSignals(shapes[0]);
-  const sphereSignals = createSignals(shapes[LAST]);
   const motionPoint = { x: 0, y: 0, z: 0, spin: 0 };
   let t0 = null, yawBase = 0, pitch = 0, vYaw = 0, vPitch = 0, lean = 0, leanT = 0, dragging = false, last = null;
 
@@ -88,10 +87,8 @@ export function startCloud(canvas, ambientCanvas) {
     if (t0 === null) t0 = now;
     const A = shapes[i], B = shapes[i + 1], D = side * 2.4, Zr = side * .3;
     const brainWeight = still ? 0 : clamp(1 - p * 4, 0, 1);
-    const sphereWeight = still ? 0 : clamp((p - (LAST - .25)) * 4, 0, 1);
     const brainEvents = brainSignals.update(now, brainWeight > 0 && now - t0 > 2200);
-    const sphereEvents = sphereSignals.update(now, sphereWeight > 0);
-    const response = sphereSignals.pulse() * sphereWeight, lit = [];
+    const lit = [];
     let theta = .32, tilt = .12;
     if (!still) {
       if (!dragging) { yawBase += vYaw; vYaw *= .95; pitch += vPitch; vPitch *= .95; pitch *= .996; }
@@ -108,10 +105,9 @@ export function startCloud(canvas, ambientCanvas) {
         const ie = 1 - Math.pow(1 - clamp((now - t0 - q.d * 700) / 2000, 0, 1), 3);
         x = scatter[j] + (x - scatter[j]) * ie; y = scatter[j + 1] + (y - scatter[j + 1]) * ie; z = scatter[j + 2] + (z - scatter[j + 2]) * ie;
       }
-      const brightness = brainSignals.light(x, y, z) * brainWeight + sphereSignals.light(x, y, z) * sphereWeight;
-      const expansion = 1 + response + brightness * sphereWeight * .025;
-      let X = x * side * expansion, Y = y * side * expansion;
-      const Z = z * side * expansion;
+      const brightness = brainSignals.light(x, y, z) * brainWeight;
+      let X = x * side, Y = y * side;
+      const Z = z * side;
       if (!still && (m === 0 || m === 1)) { X += Math.sin(now / 1100 + q.ph) * 2; Y += Math.cos(now / 1300 + q.ph) * 2; }
       const x1 = X * cs + Z * sn, z1 = -X * sn + Z * cs, y1 = Y * ct - z1 * st, z2 = Y * st + z1 * ct;
       const fz = D / (D - z2), depth = clamp((z2 + Zr) / (2 * Zr), 0, 1);
@@ -155,7 +151,7 @@ export function startCloud(canvas, ambientCanvas) {
         ctx.beginPath(); ctx.arc(head[0], head[1], 2.4, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
       }
     };
-    drawSignals(brainEvents, brainWeight); drawSignals(sphereEvents, sphereWeight);
+    drawSignals(brainEvents, brainWeight);
     ctx.globalAlpha = 1;
     raf = requestAnimationFrame(frame);
   }
