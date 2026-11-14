@@ -63,7 +63,7 @@ Decisions (made with the user, do not reopen):
 - [x] 3.4 Share preview, favicon, dev port, unused files
 - [x] 4.1 README, licence, example settings
 - [x] 4.2 Repo tidy
-- [ ] 5.1 Automated checks (backend tests, front end lint and build)
+- [x] 5.1 Automated checks (backend tests, front end lint and build)
 - [ ] 5.2 Security testing
 - [ ] 5.3 Browser walk-through (QA)
 - [ ] 5.4 Independent review and repairs

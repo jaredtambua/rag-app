@@ -2,6 +2,8 @@
 
 Ask your documents anything. Tessel reads a PDF you upload and answers your questions, showing the exact pages it used.
 
+[![CI](https://github.com/jaredtambua/rag-app/actions/workflows/ci.yml/badge.svg)](https://github.com/jaredtambua/rag-app/actions/workflows/ci.yml)
+
 **Live demo:** https://rag-app-1-8mtr.onrender.com
 
 ![The Tessel landing page](docs/screenshots/landing.png)

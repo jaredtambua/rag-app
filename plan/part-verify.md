@@ -1,7 +1,7 @@
 # Verification and release parts (5.x, 6.1)
 
 ### 5.1 Automated checks
-- Status: not started
+- Status: done (workflow exists; first CI run happens after the push)
 - Does: gathers the backend tests (from parts 2.x), runs them with front end lint and build, and adds a GitHub Actions workflow that runs the front end lint and build and the backend tests on each push.
 - Does not: no browser tests, no real OpenAI calls.
 - Needs: 2.4, 3.4, 4.2
