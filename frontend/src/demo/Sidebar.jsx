@@ -19,7 +19,7 @@ export default function Sidebar({ demo, inputRef }) {
         isUploading={demo.isUploading}
         full={count >= LIMITS.files}
       />
-      <DocumentList documents={demo.documents} status={demo.documentsStatus} deleteDocument={demo.deleteDocument} />
+      <DocumentList documents={demo.documents} status={demo.documentsStatus} deleteDocument={demo.deleteDocument} retryConnect={demo.retryConnect} />
       <p className="side-warn">Uploads are private to this browser and removed {LIMITS.minutes} minutes after you add them.</p>
     </div>
   );

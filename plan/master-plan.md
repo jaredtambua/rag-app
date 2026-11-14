@@ -58,7 +58,7 @@ Decisions (made with the user, do not reopen):
 - [x] 2.3 Question limits and rate limiting
 - [x] 2.4 Backend tidy: errors, logging, batching, hardening, settings
 - [x] 3.1 Front end: visitor ID, limits, expiry countdown, new messages
-- [ ] 3.2 Front end: server waking-up message
+- [x] 3.2 Front end: server waking-up message
 - [ ] 3.3 Front end: honest landing and demo copy
 - [ ] 3.4 Share preview, favicon, dev port, unused files
 - [ ] 4.1 README, licence, example settings

@@ -4,7 +4,7 @@ import { formatTimeLeft } from "./limits.js";
 
 const SEARCH_FROM = 8; // below this many files a search box is just clutter
 
-export default function DocumentList({ documents, status, deleteDocument }) {
+export default function DocumentList({ documents, status, deleteDocument, retryConnect }) {
   const [query, setQuery] = useState("");
   const listRef = useRef(null);
   const showSearch = documents.length >= SEARCH_FROM;
@@ -19,10 +19,11 @@ export default function DocumentList({ documents, status, deleteDocument }) {
 
   return (
     <div className="docs-wrap">
-      {status === "loading" && <WakeNotice />}
-
       {status === "failed" && documents.length === 0 && (
-        <p className="empty">Documents could not be loaded. Check your connection and refresh the page.</p>
+        <div className="empty">
+          <p>Documents could not be loaded.</p>
+          <button className="btn btn-ghost btn-small retry" type="button" onClick={retryConnect}>Try again</button>
+        </div>
       )}
 
       {status === "ready" && documents.length === 0 && (
@@ -54,16 +55,6 @@ export default function DocumentList({ documents, status, deleteDocument }) {
           {shown.length === 0 && <li className="empty no-match">No document matches &ldquo;{query.trim()}&rdquo;.</li>}
         </ul>
       )}
-    </div>
-  );
-}
-
-/* shown while the first request is out; the demo server can be slow to wake up */
-function WakeNotice() {
-  return (
-    <div className="progress" role="status">
-      <div className="bar" aria-hidden="true"><span /></div>
-      <p>Connecting to the demo server. If it has been idle it may take a minute to wake up.</p>
     </div>
   );
 }

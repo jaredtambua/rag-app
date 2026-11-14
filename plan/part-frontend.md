@@ -15,7 +15,7 @@ Files in `frontend/src/` (`demo/`, `landing/`, `routing.js`, `index.css`) and `f
 - If it goes wrong: if the ID cannot be stored, the visitor still works for the page session.
 
 ### 3.2 Front end: server waking-up message
-- Status: not started
+- Status: done (1 screenshot round)
 - Does: if the server has not answered within 4 seconds of loading the demo, show "The demo server is waking up, this can take up to a minute." and keep retrying quietly; hide the message once it answers. Also ping the server's `/health` endpoint when the landing page loads (never `/documents`, which now needs a visitor ID) so it is warm by the time the visitor clicks "Try the Demo".
 - Does not: no uptime pinger service.
 - Needs: 3.1

@@ -3,7 +3,7 @@ import { SendIcon } from "./icons.jsx";
 import { LIMITS } from "./limits.js";
 
 /* The ask box, docked at the bottom of the conversation pane. */
-export default function AskPanel({ question, setQuestion, askQuestion, isAsking, locked, textareaRef }) {
+export default function AskPanel({ question, setQuestion, askQuestion, isAsking, locked, lockedHint, textareaRef }) {
   const fallbackRef = useRef(null);
   const ref = textareaRef || fallbackRef;
 
@@ -35,13 +35,13 @@ export default function AskPanel({ question, setQuestion, askQuestion, isAsking,
           disabled={locked}
           onChange={(event) => setQuestion(event.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={locked ? "Add a PDF to start asking" : "Ask about your documents"}
+          placeholder={locked ? (lockedHint ? "Waiting for the demo server" : "Add a PDF to start asking") : "Ask about your documents"}
         />
         <button className="btn btn-primary" type="submit" disabled={isAsking || locked}>
           {isAsking ? "Thinking..." : "Ask"} {!isAsking && <SendIcon size={16} />}
         </button>
       </div>
-      <p className="hint">{locked ? "Questions open up once a document is added." : "Ctrl+Enter to send. Enter adds a new line."}</p>
+      <p className="hint">{locked ? (lockedHint || "Questions open up once a document is added.") : "Ctrl+Enter to send. Enter adds a new line."}</p>
     </form>
   );
 }

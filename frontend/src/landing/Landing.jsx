@@ -4,6 +4,7 @@ import DemoLink from "../components/DemoLink.jsx";
 import { startCloud } from "./cloud.js";
 import { STOP_COUNT } from "./stops.js";
 import { useSceneLayers } from "./useSceneLayers.js";
+import { warmUpServer } from "../demo/useRagDemo.js";
 import { useStopNavigation } from "./useStopNavigation.js";
 import "./landing.css";
 
@@ -45,6 +46,9 @@ export default function Landing({ onNavigate }) {
 
   useEffect(() => startCloud(cloudRef.current, ambientRef.current), []);
   useSceneLayers(scenesRef);
+
+  /* wake the demo server in the background so it is ready by the time someone opens the demo */
+  useEffect(() => { warmUpServer(); }, []);
 
   function jump(event, stop) {
     event.preventDefault();

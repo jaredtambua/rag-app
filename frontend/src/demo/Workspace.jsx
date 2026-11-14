@@ -34,7 +34,10 @@ export default function Workspace({ onNavigate }) {
 
   const count = demo.documents.length;
   const loading = demo.documentsStatus === "loading";
+  const failed = demo.documentsStatus === "failed";
   const firstRun = demo.documentsStatus === "ready" && count === 0;
+  /* the ask box opens once the server is up and there is a document to ask about */
+  const askLocked = loading || failed || firstRun;
   const hasTurn = Boolean(demo.askedQuestion);
 
   /* on a wide screen the file picker is already on the page; on a phone it lives in the sheet */
@@ -87,7 +90,7 @@ export default function Workspace({ onNavigate }) {
             <div className="thread-inner">
               {hasTurn
                 ? <AnswerPanel answer={demo.answer} citations={demo.citations} isAsking={demo.isAsking} askedQuestion={demo.askedQuestion} />
-                : <EmptyState loading={loading} firstRun={firstRun} count={count} onPick={pickFile} onExample={fillExample} />}
+                : <EmptyState loading={loading} waking={demo.waking} failed={failed} onRetry={demo.retryConnect} firstRun={firstRun} count={count} onPick={pickFile} onExample={fillExample} />}
             </div>
           </div>
           <div className="dock">
@@ -97,7 +100,8 @@ export default function Workspace({ onNavigate }) {
                 setQuestion={demo.setQuestion}
                 askQuestion={demo.askQuestion}
                 isAsking={demo.isAsking}
-                locked={firstRun}
+                locked={askLocked}
+                lockedHint={loading ? "Questions open up once the demo server is ready." : failed ? "Questions open up once the demo server answers." : undefined}
                 textareaRef={questionRef}
               />
             </div>

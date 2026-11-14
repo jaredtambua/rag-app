@@ -3,8 +3,27 @@ import { UploadIcon } from "./icons.jsx";
 const EXAMPLES = ["Summarise this document", "What are the key points?", "What does it say about risks?"];
 
 /* What the conversation pane shows before the first question: first run guides to an upload, later it offers a start. */
-export default function EmptyState({ loading, firstRun, count, onPick, onExample }) {
-  if (loading) return <div className="empty-state" />;
+export default function EmptyState({ loading, waking, failed, onRetry, firstRun, count, onPick, onExample }) {
+  if (loading) {
+    return (
+      <div className="empty-state">
+        <div className="progress" role="status">
+          <div className="bar" aria-hidden="true"><span /></div>
+          <p>{waking ? "The demo server is waking up, this can take up to a minute." : "Connecting to the demo server."}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (failed) {
+    return (
+      <div className="empty-state">
+        <h2>The demo server is not answering.</h2>
+        <p>It may still be starting up. Give it a moment, then try again.</p>
+        <button className="btn btn-primary" type="button" onClick={onRetry}>Try again</button>
+      </div>
+    );
+  }
 
   if (firstRun) {
     return (

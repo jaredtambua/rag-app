@@ -1,5 +1,5 @@
 /* All the demo's state and API calls. Every request carries the visitor ID; the screens only read what this hook returns. */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getVisitorId } from "./visitor.js";
 import { LIMITS, MAX_FILE_BYTES, MESSAGES } from "./limits.js";
 
@@ -8,12 +8,38 @@ const API_URL = import.meta.env.VITE_API_URL;
 /* the time-left labels refresh this often */
 const TICK_MS = 60_000;
 
+/* The demo server sleeps when idle and can take a minute to wake. These are the waiting rules. */
+const WAKING_AFTER_MS = 4_000;
+const RETRY_EVERY_MS = 5_000;
+const GIVE_UP_AFTER_MS = 90_000;
+
 const isPdf = (file) => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 
 function request(path, options = {}) {
   const headers = { ...options.headers, "X-Visitor-Id": getVisitorId() };
   return fetch(`${API_URL}${path}`, { ...options, headers });
 }
+
+/* One quiet check that the server answers. Never throws, and never needs a visitor ID. */
+async function pingHealth(timeoutMs = RETRY_EVERY_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${API_URL}/health`, { signal: controller.signal });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* Called when the landing page opens so the server is already awake when someone clicks "Try the demo". Failures are silent. */
+export function warmUpServer() {
+  pingHealth(60_000);
+}
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /* The backend's own message is shown for any refusal. A rate limit without a time in its message gets the retry time added. */
 async function problemFrom(response, fallback) {
@@ -39,6 +65,8 @@ export function useRagDemo() {
   const [listing, setListing] = useState({ items: [], receivedAt: 0 });
   const [now, setNow] = useState(() => Date.now());
   const [documentsStatus, setDocumentsStatus] = useState("loading"); // loading | ready | failed
+  const [waking, setWaking] = useState(false); // true once the server has been slow for a few seconds
+  const connectRun = useRef(0);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [question, setQuestion] = useState("");
   const [askedQuestion, setAskedQuestion] = useState("");
@@ -76,10 +104,49 @@ export function useRagDemo() {
     }
   }
 
-  /* load the document list once when the workspace opens */
+  /* Wait for the server to answer /health (showing a waking message if it is slow, retrying quietly), then load the list. */
+  async function connect() {
+    const run = ++connectRun.current;
+    const current = () => run === connectRun.current;
+    const started = Date.now();
+    const wakingTimer = setTimeout(() => current() && setWaking(true), WAKING_AFTER_MS);
+
+    setDocumentsStatus("loading");
+    setWaking(false);
+    setError("");
+
+    try {
+      while (current()) {
+        const attemptStarted = Date.now();
+        const up = await pingHealth();
+        if (!current()) return;
+
+        if (up) {
+          setWaking(false);
+          await loadDocuments();
+          return;
+        }
+
+        if (Date.now() - started >= GIVE_UP_AFTER_MS) {
+          setWaking(false);
+          setDocumentsStatus("failed");
+          setError("The demo server did not respond. Please try again in a moment.");
+          return;
+        }
+
+        await wait(Math.max(0, RETRY_EVERY_MS - (Date.now() - attemptStarted)));
+      }
+    } finally {
+      clearTimeout(wakingTimer);
+    }
+  }
+
+  /* connect when the workspace opens; leaving the page stops any waiting */
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadDocuments();
+    connect();
+    return () => { connectRun.current += 1; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* once a minute, refresh the time-left labels */
@@ -233,7 +300,7 @@ export function useRagDemo() {
   }
 
   return {
-    documents, documentsStatus,
+    documents, documentsStatus, waking, retryConnect: connect,
     selectedFiles, chooseFiles, uploadDocument, isUploading,
     question, setQuestion, askQuestion, isAsking, askedQuestion,
     answer, citations,
