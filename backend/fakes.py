@@ -36,6 +36,15 @@ def fake_embeddings(texts: list[str]) -> list[list[float]]:
 REWRITE_CALLS: list = []
 
 
+MAX_RECORDED_CALLS = 100
+
+
+def record_rewrite(question, history) -> None:
+    """Remember a rewrite call, keeping only the most recent ones."""
+    REWRITE_CALLS.append((question, list(history)))
+    del REWRITE_CALLS[:-MAX_RECORDED_CALLS]
+
+
 def reset_calls() -> None:
     REWRITE_CALLS.clear()
 
