@@ -306,10 +306,16 @@ def test_two_simultaneous_uploads_cannot_both_pass_the_limit(client):
 
     results = []
 
-    def go(name):
-        results.append(upload(client, v, name, make_pdf([f"text {name}"])).status_code)
+    def go(name, ip):
+        # different network addresses: each address may only read one PDF at a time
+        response = client.post(
+            "/upload",
+            files=[("files", (name, make_pdf([f"text {name}"]), "application/pdf"))],
+            headers={**headers(v), "X-Forwarded-For": ip},
+        )
+        results.append(response.status_code)
 
-    threads = [threading.Thread(target=go, args=(n,)) for n in ("x.pdf", "y.pdf")]
+    threads = [threading.Thread(target=go, args=a) for a in (("x.pdf", "203.0.113.1"), ("y.pdf", "203.0.113.2"))]
     for t in threads:
         t.start()
     for t in threads:

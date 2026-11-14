@@ -206,13 +206,19 @@ def upload_documents(
     uploaded = []
     skipped = []
     first_status = None
+    refunded = False
 
     for file in files:
         try:
             name = clean_display_name(file.filename)
             data = read_limited(file.file)
-            document = storage.add_document(visitor, name, data, use_quota)
+            document = storage.add_document(visitor, name, data, use_quota, owner=ip)
         except UploadRejected as rejection:
+            if rejection.status == 503 and not refunded:
+                # 'Busy' refusals are not the visitor's fault: they do not use up attempts.
+                refunded = True
+                rate_limit.refund_upload_attempt(ip)
+
             first_status = first_status or rejection.status
             skipped.append({"filename": file.filename or "", "reason": rejection.message})
             continue

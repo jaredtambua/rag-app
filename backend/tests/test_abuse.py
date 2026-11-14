@@ -69,7 +69,7 @@ def test_parse_time_limit(client, monkeypatch, data_dir):
     monkeypatch.setattr(config, "PARSE_TIMEOUT_SECONDS", 0.001)
     response = upload(client, new_visitor(), "slow.pdf", make_pdf(["some text"]))
     assert response.status_code == 400
-    assert response.json()["detail"] == "This PDF took too long to read. Try a simpler file."
+    assert response.json()["detail"] == "This PDF is too complex or too large for the demo. Try a simpler file."
     assert files_on_disk(data_dir) == []
 
 
@@ -145,9 +145,9 @@ def test_health_and_other_visitors_answer_during_a_slow_parse(client, monkeypatc
 
     real = pdf_parser.parse_pdf
 
-    def slow(path):
+    def slow(path, owner=None):
         time.sleep(2)
-        return real(path)
+        return real(path, owner)
 
     monkeypatch.setattr(pdf_parser, "parse_pdf", slow)
     other = new_visitor()

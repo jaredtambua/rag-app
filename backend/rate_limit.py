@@ -86,6 +86,15 @@ class Limiter:
             for key, _, _ in scopes:
                 self._hits[key].append(now)
 
+    def refund(self, keys):
+        """Give back the newest hit of each key (a refused 'busy' request is not an attempt)."""
+        with self._lock:
+            for key in keys:
+                hits = self._hits.get(key)
+
+                if hits:
+                    hits.pop()
+
     def prune(self):
         """Drop keys with no hits left in the window (bounds memory)."""
         now = clock.now()
@@ -122,6 +131,10 @@ def check_upload_attempt(ip: str):
             ("attempt:total", config.UPLOAD_ATTEMPT_LIMIT_TOTAL, BUSY_MESSAGE),
         ]
     )
+
+
+def refund_upload_attempt(ip: str):
+    limiter.refund([f"attempt:ip:{ip}", "attempt:total"])
 
 
 def check_upload(visitor_id: str, ip: str):

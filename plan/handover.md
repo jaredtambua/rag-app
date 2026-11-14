@@ -35,3 +35,10 @@
 - `/health` is async and lock-free. `X-Forwarded-For` joins all header lines and takes the last entry. Every `<` and `>` in document text and source names is escaped in the prompt. Deep JSON gets a 400 (FastAPI already returned 400 at the depth tested here; a `RecursionError` handler was added anyway). Answers no longer render images. The FAKE_OPENAI guard now also fires on first use and for any non-empty `RENDER`.
 - Accepted and left unfixed: bidi characters in display names, trailing-slash redirect, all-zero UUID, the `reset_all` folder-name rule.
 - Not covered: a PDF whose single page takes under 10 s but uses lots of memory in the worker (no memory limit on Windows; the 8 MB content cap and timeout bound it).
+
+## Second repair round (reader memory, fair slots)
+- The PDF reader child is now watched by the parent every 20 ms (psutil, added to requirements.txt, pinned 7.2.2): killed with its child processes above 350 MB or after 5 s, with the friendly 400 "too complex or too large for the demo". On Linux the child also gets a hard 700 MB address-space ceiling (not tested here: this machine is Windows). Stream sizes are counted before decompression (bounded inflate, 1 MB at a time) for page contents and for all form objects; the 8 MB content cap covers both. Nested-form amplification is not counted; the memory and time kills cover it.
+- Peak memory (reader plus children), before to after: nested forms 582 MB (ran the full 10 s) to 351 MB (killed at 4.6 s); 200 MB form object 2,994 MB to 50 MB (refused in 0.3 s); 1 GB drawing page 2,028 MB to 49 MB (refused in 0.3 s).
+- One reader slot per client address (global stays 2). 503 "busy" refusals are refunded from the upload-attempt counts.
+- backend/requirements.txt was UTF-16 in git (the earlier rewrite kept the old encoding); it is now UTF-8.
+- Not fixed: the Linux address-space limit is untested; a legitimate form-heavy PDF over the 8 MB content cap is refused.

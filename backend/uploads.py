@@ -13,7 +13,7 @@ MSG_NO_TEXT = "No readable text found in this PDF. Scanned documents are not sup
 MSG_TOO_MUCH_TEXT = (
     "This document has too much text for the demo. Try a shorter or simpler PDF."
 )
-MSG_PARSE_TIMEOUT = "This PDF took too long to read. Try a simpler file."
+MSG_TOO_COMPLEX = "This PDF is too complex or too large for the demo. Try a simpler file."
 MSG_BUSY = "The demo is busy reading other files. Please try again in a moment."
 MSG_DUPLICATE = "You have already uploaded a file with this name."
 MSG_PROCESSING_FAILED = "We could not process this file. Please try again."

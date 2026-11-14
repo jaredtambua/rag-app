@@ -108,7 +108,7 @@ def _check_room(visitor_id: str, display_name: str) -> None:
 
 
 def add_document(
-    visitor_id: str, display_name: str, data: bytes, on_validated=None
+    visitor_id: str, display_name: str, data: bytes, on_validated=None, owner=None
 ) -> dict:
     """Check, save and index one PDF for a visitor.
 
@@ -119,6 +119,7 @@ def add_document(
 
     on_validated, if given, is called once the file has passed every check
     and before the (paid) embedding starts; it may raise to stop the upload.
+    owner is the client address, used to give each client one PDF read at a time.
 
     Raises UploadRejected with a user-facing message. Whatever happens, a
     failed upload leaves no file and no index entries behind.
@@ -135,7 +136,7 @@ def add_document(
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
 
-        pages = pdf_parser.parse_pdf(path)
+        pages = pdf_parser.parse_pdf(path, owner)
         chunk_records = build_chunk_records(pages, doc_id, display_name)
 
         if not chunk_records:
