@@ -77,8 +77,8 @@ class Limiter:
                 hits = self._recent(key, now)
 
                 if len(hits) >= limit:
-                    wait = math.ceil(hits[0] + config.RATE_WINDOW_SECONDS - now)
-                    wait = max(1, wait)
+                    oldest = hits[0] if hits else now
+                    wait = max(1, math.ceil(oldest + config.RATE_WINDOW_SECONDS - now))
                     raise RateLimited(message.format(wait=_wait_text(wait)), wait)
 
             for key, _, _ in scopes:

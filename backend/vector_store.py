@@ -8,7 +8,7 @@ storage lock around these calls.
 import logging
 
 from clients import get_collection
-from config import EMBEDDING_BATCH_SIZE
+import config
 from embeddings import embed_texts
 
 logger = logging.getLogger(__name__)
@@ -43,8 +43,10 @@ def add_document(visitor_id, doc_id, uploaded_at, source, chunk_records):
     """Embed (in batches) and store all chunks of one document."""
     collection = get_collection()
 
-    for start in range(0, len(chunk_records), EMBEDDING_BATCH_SIZE):
-        batch = chunk_records[start : start + EMBEDDING_BATCH_SIZE]
+    size = config.EMBEDDING_BATCH_SIZE
+
+    for start in range(0, len(chunk_records), size):
+        batch = chunk_records[start : start + size]
         embeddings = embed_texts([record["text"] for record in batch])
 
         collection.add(

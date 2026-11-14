@@ -4,13 +4,14 @@ from typing import List
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
+from starlette.types import ASGIApp, Receive, Scope, Send
 from fastapi.middleware.cors import CORSMiddleware
 
 import config
 import rate_limit
 import storage
 from models import QuestionRequest
-from rag import generate_answer
+from rag import AnswerError, generate_answer
 from uploads import UploadRejected, clean_display_name, read_limited
 from retrieval import retrieve_context
 from visitor import visitor_id
@@ -20,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    config.check_environment()
+
     # Uploads never survive a restart, matching the 30-minute promise.
     storage.reset_all()
     rate_limit.limiter.reset()
@@ -35,18 +38,103 @@ async def lifespan(app: FastAPI):
         sweeper.stop()
 
 
-app = FastAPI(lifespan=lifespan)
+class BodyTooLarge(Exception):
+    pass
 
+
+class BodyLimitMiddleware:
+    """Refuse oversized request bodies while they stream in.
+
+    Checks the declared Content-Length first, then counts the bytes actually
+    received, so a body sent without a length cannot get past the limit.
+    """
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        if scope["path"] == "/upload":
+            limit = config.MAX_UPLOAD_REQUEST_BYTES
+            message = "This file is larger than 5 MB."
+        else:
+            limit = config.MAX_OTHER_REQUEST_BYTES
+            message = "The request is too large."
+
+        declared = dict(scope["headers"]).get(b"content-length", b"")
+        if declared.isdigit() and int(declared) > limit:
+            await self._refuse(scope, receive, send, message)
+            return
+
+        received = 0
+        exceeded = False
+        responded = False
+
+        async def refuse_once():
+            nonlocal responded
+            if not responded:
+                responded = True
+                await self._refuse(scope, receive, send, message)
+
+        async def limited_receive():
+            nonlocal received, exceeded
+            event = await receive()
+            if event["type"] == "http.request":
+                received += len(event.get("body", b""))
+                if received > limit:
+                    exceeded = True
+                    raise BodyTooLarge()
+            return event
+
+        async def guarded_send(event):
+            nonlocal responded
+            if exceeded:
+                # The framework may turn the failed read into its own error
+                # response; replace it with a clear 413.
+                await refuse_once()
+                return
+            if event["type"] == "http.response.start":
+                responded = True
+            await send(event)
+
+        try:
+            await self.app(scope, limited_receive, guarded_send)
+        except BodyTooLarge:
+            await refuse_once()
+
+    @staticmethod
+    async def _refuse(scope, receive, send, message):
+        response = JSONResponse(status_code=413, content={"detail": message})
+        await response(scope, receive, send)
+
+
+app = FastAPI(
+    lifespan=lifespan,
+    docs_url="/docs" if config.docs_enabled() else None,
+    redoc_url="/redoc" if config.docs_enabled() else None,
+    openapi_url="/openapi.json" if config.docs_enabled() else None,
+)
+
+app.add_middleware(BodyLimitMiddleware)
+
+# Added last so it is outermost: even refusals carry the CORS headers.
+# No cookies are used, so credentials are not allowed.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://rag-app-1-8mtr.onrender.com",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=config.allowed_origins(),
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-Visitor-Id"],
+    # Lets the page read how long to wait after a 429.
+    expose_headers=["Retry-After"],
 )
+
+
+@app.exception_handler(AnswerError)
+def answer_error_handler(request: Request, error: AnswerError):
+    return JSONResponse(status_code=502, content={"detail": error.message})
 
 
 @app.exception_handler(rate_limit.RateLimited)

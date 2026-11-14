@@ -56,7 +56,7 @@ Decisions (made with the user, do not reopen):
 - [x] 2.1 Per-visitor private storage with 30-minute expiry
 - [x] 2.2 Upload limits and safe file handling
 - [x] 2.3 Question limits and rate limiting
-- [ ] 2.4 Backend tidy: errors, logging, batching, hardening, settings
+- [x] 2.4 Backend tidy: errors, logging, batching, hardening, settings
 - [ ] 3.1 Front end: visitor ID, limits, expiry countdown, new messages
 - [ ] 3.2 Front end: server waking-up message
 - [ ] 3.3 Front end: honest landing and demo copy

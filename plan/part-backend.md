@@ -39,7 +39,7 @@ Files are in `backend/`: `api.py`, `rag.py`, `retrieval.py`, `vector_store.py`, 
 - If it goes wrong: if limiter state is lost on restart, limits reset; acceptable.
 
 ### 2.4 Backend tidy: errors, logging, batching, hardening, settings
-- Status: not started
+- Status: done
 - Does: friendly JSON errors from ask when the model returns bad output; no document text in logs; chunks embedded in batches instead of one call each; instructions separated from document text to resist injected instructions; allowed origins come from an environment variable.
 - Does not: no change to answer quality, chunking or citation logic beyond what is stated.
 - Needs: 2.2

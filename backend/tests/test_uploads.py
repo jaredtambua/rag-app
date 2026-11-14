@@ -217,6 +217,7 @@ def test_indexing_failure_cleans_up_and_is_friendly(client, data_dir, monkeypatc
 
 def test_partial_failure_during_indexing_removes_added_chunks(client, data_dir, monkeypatch):
     import clients
+    import config
     import vector_store
 
     real_add = clients.get_collection().add
@@ -233,7 +234,7 @@ def test_partial_failure_during_indexing_removes_added_chunks(client, data_dir, 
             return real_add(**kwargs)
 
     monkeypatch.setattr(vector_store, "get_collection", lambda: Flaky())
-    monkeypatch.setattr(vector_store, "EMBEDDING_BATCH_SIZE", 1)
+    monkeypatch.setattr(config, "EMBEDDING_BATCH_SIZE", 1)
     v = new_visitor()
     long_text = "Sentence number one is here. " * 60
     response = upload(client, v, "multi.pdf", make_pdf([long_text, long_text]))

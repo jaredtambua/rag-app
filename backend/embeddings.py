@@ -1,5 +1,5 @@
 import config
-from clients import get_client
+import clients
 from fakes import fake_embeddings
 
 
@@ -16,7 +16,7 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
 
     for start in range(0, len(texts), size):
         batch = texts[start : start + size]
-        response = get_client().embeddings.create(
+        response = clients.get_client().embeddings.create(
             model=config.EMBEDDING_MODEL, input=batch
         )
         embeddings.extend(item.embedding for item in response.data)

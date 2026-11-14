@@ -81,6 +81,37 @@ UPLOAD_LIMIT_TOTAL = 40
 EMBEDDING_BATCH_SIZE = 64
 
 
+DEFAULT_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://rag-app-1-8mtr.onrender.com",
+]
+
+# Largest request body accepted: three 5 MB files plus form overhead for
+# uploads, and a small cap for everything else (questions are tiny).
+MAX_UPLOAD_REQUEST_BYTES = 20 * 1024 * 1024
+MAX_OTHER_REQUEST_BYTES = 64 * 1024
+
+
+def allowed_origins() -> list[str]:
+    """Browser origins allowed to call the API. Override with ALLOWED_ORIGINS."""
+    raw = os.environ.get("ALLOWED_ORIGINS")
+    if raw is None:
+        return list(DEFAULT_ALLOWED_ORIGINS)
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+def docs_enabled() -> bool:
+    """The interactive API docs are off unless ENABLE_API_DOCS=1."""
+    return os.environ.get("ENABLE_API_DOCS") == "1"
+
+
+def check_environment() -> None:
+    """Refuse to run the OpenAI fakes in the hosted environment."""
+    if fake_openai() and os.environ.get("RENDER"):
+        raise RuntimeError("FAKE_OPENAI must never be set on Render.")
+
+
 def fake_openai() -> bool:
     """Test and QA switch: replace OpenAI calls with deterministic fakes."""
     return os.environ.get("FAKE_OPENAI") == "1"
