@@ -109,8 +109,8 @@ Accounts, history that survives a refresh, and project folders are possible late
 ## 7. Build order
 
 - [x] 1.1 Back end: history field and validation
-- [ ] 1.2 Fakes: rewrite and history stand-ins
-- [ ] 1.3 Back end: rewrite step and safe prompts
+- [x] 1.2 Fakes: rewrite and history stand-ins
+- [x] 1.3 Back end: rewrite step and safe prompts
 - [ ] 2.1 Front end: send the last 5 turns
 - [ ] 3.1 Browser check with a mocked back end
 - [ ] 3.2 Independent review and repairs

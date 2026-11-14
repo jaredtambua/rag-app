@@ -1,8 +1,8 @@
 # Handover (conversation memory)
 
 - **Last updated:** 2026-11-15, plan written, nothing built yet.
-- **Done so far:** 1.1 (history field and validation; 154 tests green). Test helpers moved to conftest. Tests for 1.2/1.3 live in `backend/tests/test_history_followup.py` (split from test_history.py so each part commits green). Branch: feature/landing-redesign-and-memory, one local commit per part, never push.
-- **Next up:** 1.2 Fakes.
+- **Done so far:** 1.1, 1.2, 1.3 (back end complete; 183 tests green). Test helpers moved to conftest. Tests for 1.2/1.3 live in `backend/tests/test_history_followup.py` (split from test_history.py so each part commits green). Branch: feature/landing-redesign-and-memory, one local commit per part, never push.
+- **Next up:** 2.1 Front end.
 - **Blocked or broken:** nothing.
 - **Changes proposed to the plan:** none.
 - **How to run the checks:** from the repo root `.venv\Scripts\python.exe -m pytest` (132 tests exist before this work, all with fake OpenAI); `cd frontend; npm run lint; npm run build`; the browser check is the 3.1 script (Playwright outside the repo).

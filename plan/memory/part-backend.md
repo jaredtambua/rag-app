@@ -15,7 +15,7 @@ Files are in `backend/`: `api.py` (the `/ask` route), `models.py` (`QuestionRequ
 - If it goes wrong: a body of the wrong shape keeps the app's existing refusal; never a bare 500.
 
 ### 1.2 Fakes: rewrite and history stand-ins
-- Status: not started
+- Status: done
 - Does: the fake module can stand in for the rewrite step, and records its calls, so later tests can prove the wiring without OpenAI.
 - Does not: no real OpenAI calls; no change to how the fake embeddings or the existing fake answer behave when there is no history.
 - Needs: 1.1
@@ -27,7 +27,7 @@ Files are in `backend/`: `api.py` (the `/ask` route), `models.py` (`QuestionRequ
 - If it goes wrong: nothing special.
 
 ### 1.3 Back end: rewrite step and safe prompts
-- Status: not started
+- Status: done
 - Does: a follow-up question now finds the right pages and is answered with the earlier conversation understood. The first question of a thread behaves exactly as today.
 - Does not: history is never evidence and never cited; no extra rate-limit unit; nothing stored.
 - Needs: 1.1, 1.2
