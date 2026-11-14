@@ -42,3 +42,4 @@
 - One reader slot per client address (global stays 2). 503 "busy" refusals are refunded from the upload-attempt counts.
 - backend/requirements.txt was UTF-16 in git (the earlier rewrite kept the old encoding); it is now UTF-8.
 - Not fixed: the Linux address-space limit is untested; a legitimate form-heavy PDF over the 8 MB content cap is refused.
+- RLIMIT_AS (Linux address-space ceiling) was removed from the PDF reader: untested, and it counts mapped libraries so it could break normal PDFs on Render. Protection is the 350 MB watcher, the 5 s limit and the stream caps.

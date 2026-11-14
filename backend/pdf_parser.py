@@ -95,7 +95,6 @@ def _run_worker(path) -> dict:
         str(config.MAX_PAGES),
         str(config.MAX_EXTRACTED_CHARACTERS),
         str(config.MAX_CONTENT_BYTES),
-        str(config.MAX_PARSE_ADDRESS_SPACE_BYTES),
     ]
 
     try:

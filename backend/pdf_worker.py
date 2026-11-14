@@ -1,6 +1,6 @@
 """Reads one PDF in a separate process so a hostile file cannot freeze or exhaust the server.
 
-Usage: python pdf_worker.py <path> <max pages> <max characters> <max content bytes> <max address space>
+Usage: python pdf_worker.py <path> <max pages> <max characters> <max content bytes>
 Prints one line of JSON: {"pages": [...]} on success, or {"error": "<code>"}.
 The parent also watches this process's memory and time and kills it if needed.
 Nothing here imports the app.
@@ -11,19 +11,6 @@ import sys
 import zlib
 
 import fitz
-
-
-def limit_memory(max_bytes):
-    """Hard memory ceiling for this process (Linux only; does nothing on Windows)."""
-    try:
-        import resource
-    except ImportError:
-        return
-
-    try:
-        resource.setrlimit(resource.RLIMIT_AS, (max_bytes, max_bytes))
-    except (ValueError, OSError):
-        pass
 
 
 def stream_size_capped(doc, xref, cap):
@@ -113,6 +100,5 @@ def main(path, max_pages, max_chars, max_content_bytes):
 
 
 if __name__ == "__main__":
-    limit_memory(int(sys.argv[5]))
     result = main(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
     sys.stdout.write(json.dumps(result))

@@ -86,8 +86,6 @@ UPLOAD_ATTEMPT_LIMIT_TOTAL = 120
 PARSE_TIMEOUT_SECONDS = 5
 # The reader and its child processes are killed above this much memory (checked every 20 ms).
 MAX_PARSE_MEMORY_BYTES = 350 * 1024 * 1024
-# On Linux the reader also gets a hard address-space ceiling set by the system.
-MAX_PARSE_ADDRESS_SPACE_BYTES = 700 * 1024 * 1024
 MAX_CONCURRENT_PARSES = 2
 # Total text taken from one document, and the chunks made from it.
 MAX_EXTRACTED_CHARACTERS = 200_000
