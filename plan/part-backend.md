@@ -27,7 +27,7 @@ Files are in `backend/`: `api.py`, `rag.py`, `retrieval.py`, `vector_store.py`, 
 - If it goes wrong: any indexing exception returns a friendly error, never a bare 500, and cleans up.
 
 ### 2.3 Question limits and rate limiting
-- Status: not started
+- Status: done
 - Does: (global caps return 429 with a message that does not mention other users, for example "The demo is very busy. Please try again later.") questions over 500 characters are refused; each visitor may ask 20 questions per rolling hour; uploads are limited to a sensible burst per visitor and per network address; a clear message with retry time is returned.
 - Does not: no paid-tier logic, no accounts.
 - Needs: 2.1

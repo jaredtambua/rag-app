@@ -96,8 +96,13 @@ def has_documents(visitor_id: str) -> bool:
         return bool(_live_documents(visitor_id))
 
 
-def add_document(visitor_id: str, display_name: str, data: bytes) -> dict:
+def add_document(
+    visitor_id: str, display_name: str, data: bytes, on_validated=None
+) -> dict:
     """Check, save and index one PDF for a visitor.
+
+    on_validated, if given, is called once the file has passed every check
+    and before the (paid) indexing starts; it may raise to stop the upload.
 
     Raises UploadRejected with a user-facing message. Whatever happens, a
     failed upload leaves no file and no index entries behind.
@@ -136,6 +141,9 @@ def add_document(visitor_id: str, display_name: str, data: bytes) -> dict:
 
             if not chunk_records:
                 raise UploadRejected(400, MSG_NO_TEXT)
+
+            if on_validated:
+                on_validated()
 
             try:
                 vector_store.add_document(
@@ -234,10 +242,11 @@ def reset_all() -> None:
 
 
 class Sweeper:
-    """Background thread that calls sweep() on an interval."""
+    """Background thread that runs the given jobs on an interval."""
 
-    def __init__(self, interval: float):
+    def __init__(self, interval: float, jobs=None):
         self._interval = interval
+        self._jobs = jobs or [sweep]
         self._stop = threading.Event()
         self._thread = threading.Thread(
             target=self._run, name="upload-sweeper", daemon=True
@@ -245,7 +254,11 @@ class Sweeper:
 
     def _run(self):
         while not self._stop.wait(self._interval):
-            sweep()
+            for job in self._jobs:
+                try:
+                    job()
+                except Exception as error:
+                    logger.error("Background job failed (%s)", type(error).__name__)
 
     def start(self):
         self._thread.start()
