@@ -253,7 +253,7 @@ export function useRagDemo() {
       setError("Please enter a question.");
       return;
     }
-    if (trimmed.length > LIMITS.questionChars) {
+    if (Array.from(trimmed).length > LIMITS.questionChars) {
       setError(MESSAGES.questionTooLong);
       return;
     }

@@ -75,6 +75,22 @@ Front end (`frontend/.env`):
 | --- | --- |
 | `VITE_API_URL` | Address of the API. It is baked in when the page is built, so set it before `npm run build`. |
 
+## Deployment
+
+The live site uses Render: a static site for the front end and a web service for the API. Nothing here changes Render for you; these are the settings the code expects.
+
+**API (web service, root directory `backend/`):**
+
+- Python version: `backend/.python-version` pins 3.14.3 (Render reads it; you can also set the `PYTHON_VERSION` environment variable).
+- Build command: `pip install -r requirements.txt`
+- Start command: `uvicorn api:app --host 0.0.0.0 --port $PORT`
+- Environment variables: `OPENAI_API_KEY` (required), `ALLOWED_ORIGINS` (only if the front end is on a different address than the default live site). Do not set `FAKE_OPENAI`: the server refuses to start with it on Render.
+
+**Front end (static site, root directory `frontend/`):**
+
+- Build command: `npm ci && npm run build`, publish directory `dist`.
+- Environment variable: `VITE_API_URL`, the address of the API. It is read at build time, so changing it needs a rebuild.
+
 ## Tests
 
 ```bash
@@ -89,7 +105,8 @@ The tests never call OpenAI. They use `FAKE_OPENAI=1`, a switch that replaces th
 
 - Each browser gets a random visitor ID (kept in local storage, not a login). You only ever see and delete your own uploads.
 - 5 MB per file, 30 pages per PDF, 3 files at a time, PDF only.
-- 20 questions per hour, each up to 500 characters. There are also hourly caps per network address and in total, to keep the demo's cost in check.
+- 20 questions per hour, each up to 500 characters (counted in characters, not bytes).
+- Accepted uploads are limited to 10 per hour per visitor, 20 per hour per network address and 40 per hour in total. There are also hourly caps per network address and in total, to keep the demo's cost in check.
 - Every upload attempt counts, even a rejected one: 30 attempts per hour per network address and 120 per hour in total. This keeps hostile files from using up the server.
 - Each PDF is read in a separate process that is killed after 5 seconds or if it uses more than 350 MB of memory (and fails with a friendly message). At most two PDFs are read at once and one per network address; others are asked to retry. A document may hold at most about 200,000 characters of text and 8 MB of decompressed page data.
 - Uploads are removed 30 minutes after you add them, and everything is wiped whenever the server restarts.

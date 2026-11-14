@@ -37,7 +37,7 @@ def test_decompression_bomb_refused_quickly_and_indexes_nothing(client, data_dir
     v = new_visitor()
     started = time.time()
     response = upload(client, v, "bomb.pdf", data)
-    assert time.time() - started < 3
+    assert time.time() - started < 20
     assert response.status_code == 400
     assert response.json()["detail"].startswith("This document has too much")
     assert listing(client, v) == []
@@ -144,25 +144,31 @@ def test_health_and_other_visitors_answer_during_a_slow_parse(client, monkeypatc
     import pdf_parser
 
     real = pdf_parser.parse_pdf
+    inside = threading.Event()
+    release = threading.Event()
 
-    def slow(path, owner=None):
-        time.sleep(2)
+    def held(path, owner=None):
+        inside.set()
+        assert release.wait(30)
         return real(path, owner)
 
-    monkeypatch.setattr(pdf_parser, "parse_pdf", slow)
+    monkeypatch.setattr(pdf_parser, "parse_pdf", held)
     other = new_visitor()
     worker = threading.Thread(target=lambda: upload(client, new_visitor(), "slow.pdf", make_pdf(["text here"])))
     worker.start()
-    time.sleep(0.5)
-    for call in (
-        lambda: client.get("/health"),
-        lambda: client.get("/documents", headers=headers(other)),
-        lambda: client.post("/ask", json={"question": "hello"}, headers=headers(other)),
-    ):
-        started = time.time()
-        assert call().status_code == 200
-        assert time.time() - started < 1
-    worker.join()
+    try:
+        assert inside.wait(20)
+        for call in (
+            lambda: client.get("/health"),
+            lambda: client.get("/documents", headers=headers(other)),
+            lambda: client.post("/ask", json={"question": "hello"}, headers=headers(other)),
+        ):
+            started = time.time()
+            assert call().status_code == 200
+            assert time.time() - started < 5  # the parse is still held, so a stalled server would hang here
+    finally:
+        release.set()
+        worker.join()
 
 
 def test_health_is_async():

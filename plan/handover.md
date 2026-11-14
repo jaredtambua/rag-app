@@ -5,12 +5,12 @@
 - **Next up:** 5.2 security testing, then 5.3 browser walk-through, 5.4 review, 6.1 push.
 - **Blocked or broken:** nothing.
 - **Python version:** the project `.venv` runs Python 3.14.3 (system Python is 3.13.0). README and CI use 3.14. The owner must confirm Render uses a matching Python version.
-- **How to run the checks:** from the repo root `.venv\Scripts\python.exe -m pytest` (99 tests, all fake OpenAI); `cd frontend; npm run lint; npm run build`.
+- **How to run the checks:** from the repo root `.venv\Scripts\python.exe -m pytest` (132 tests, all fake OpenAI); `cd frontend; npm run lint; npm run build`.
 - **How to run the app for QA (no OpenAI):** `cd backend; FAKE_OPENAI=1 DATA_DIR=<temp folder ending in data> UPLOAD_TTL_SECONDS=<optional> ..\.venv\Scripts\python.exe -m uvicorn api:app --port 8010`; front end built with `VITE_API_URL=http://localhost:8010`.
 
-## Environment problems found
-- Port 5173 is held by another project's dev server (apply-pilot, listening on 127.0.0.1:5173) and port 8000 by that project's API. Nothing of theirs was touched. Because of this the coder did NOT drive `npm run dev` in a browser on 5173; screenshots served the built `dist` to Playwright as the origin `http://localhost:5173` (no port opened) against the real local backend on 8010. A second `npm run dev` on 5173 fails loudly (strictPort), checked. Vite's own dev server binds `::1` alongside apply-pilot's `127.0.0.1`, so a browser on `localhost:5173` may reach the wrong one: stop apply-pilot's dev server before manual QA.
-- `npm run dev` for the README was checked by starting it from a fresh clone (it answers on 5173); the backend command was checked on port 8001 because 8000 is taken here.
+## Environment notes
+- Ports 5173 and 8000 may be in use by other local programs. For the browser checks the built front end was served to Playwright as the origin `http://localhost:5173` (no port opened) against the real local backend on 8010; a second `npm run dev` on 5173 fails loudly (strictPort), checked.
+- `npm run dev` for the README was checked by starting it from a fresh clone; the backend command was checked on port 8001.
 
 ## Changes proposed to the plan (none applied; for the owner or orchestrator)
 - Added (not in the plan): a request-body size cap (20 MB for /upload, 64 KB elsewhere, counted while streaming) and `Access-Control-Expose-Headers: Retry-After` so the page can read retry times. Both have tests.
@@ -48,3 +48,9 @@
 - Items 1 to 13 of the QA list done: balanced headings with a non-breaking space after the count, a rate-limit refusal keeps the previous answer (banner only), the 20-an-hour limit stated in the ask hint, icon-only "Back to site" below 350 px, focus moved after upload and after deleting the last file, Escape dismisses the banner, stale errors cleared on a new choice, dropping on a full upload zone shows the limit message, live 500-character counter with Ask disabled over the limit, upload confirmation inside the phone drawer and above the ask box on phones, answer cleared when a document is deleted or expires, one message when the server is unreachable, Cmd+Enter hint on Mac (both shortcuts work), copy "Answers cite the pages they used", landing left edges aligned to one gutter (64 px at 1440) and balanced ledes.
 - Behaviour choice: a server-side fault (5xx) or network failure still shows the "No answer came back" panel (with its reason) and no banner; refusals (4xx, including 429) show the banner only.
 - Not changed: triangles over text and the 390 px passage gap on the landing page. Checked with mocked backend and screenshots at 1440, 390 and 320 (2 rounds).
+
+## Review repairs
+- Reader tests now track only their own worker processes (matched by the test's own temp folder), use events instead of fixed sleeps, and have generous time limits; two full runs at the same time both pass (132 tests).
+- Added `.python-version` (3.14.3) at the root and in `backend/`, and a Deployment section in the README (build and start commands, environment variables). Render itself was not touched.
+- New tests: first of two documents expires while the second stays live (no expired chunk returned or cited), expiry filter in the query, and delete scoped to the visitor. Mutation checks: removing the visitor scope from `delete_document` fails 1 test; removing the `uploaded_at` filter from the query fails 2 tests.
+- The 500-character limit is counted in code points in the front end.

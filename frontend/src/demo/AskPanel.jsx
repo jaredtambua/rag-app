@@ -19,7 +19,7 @@ export default function AskPanel({ question, setQuestion, askQuestion, isAsking,
     el.style.height = `${Math.min(el.scrollHeight, 164)}px`;
   }, [question, ref]);
 
-  const length = question.trim().length;
+  const length = Array.from(question.trim()).length; /* code points, like the server */
   const over = length > LIMITS.questionChars;
   const nearLimit = length >= LIMITS.questionChars - 100;
 
