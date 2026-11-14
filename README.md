@@ -116,7 +116,7 @@ The tests never call OpenAI. They use `FAKE_OPENAI=1`, a switch that replaces th
 
 - Answer quality has not been tuned. It uses plain vector search, with no keyword search or re-ranking.
 - Scanned PDFs (images of text) are not supported; there is no OCR.
-- Each question is answered on its own; there is no conversation memory.
+- Follow-up questions use the last 5 questions and answers. They are kept only in the visitor's browser (lost on refresh or Clear history); the server stores no history. Earlier answers only help understand the question and are never used as evidence.
 - Rate limits live in the server's memory, so they reset when it restarts, and the app assumes a single server.
 - The free Render server sleeps when idle, so the first visit can take up to a minute to wake it.
 - The tests use stand-ins for OpenAI, so real answer quality is only checked by trying the live demo.

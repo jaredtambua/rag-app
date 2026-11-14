@@ -113,7 +113,7 @@ Accounts, history that survives a refresh, and project folders are possible late
 - [x] 1.3 Back end: rewrite step and safe prompts
 - [x] 2.1 Front end: send the last 5 turns
 - [x] 3.1 Browser check with a mocked back end
-- [ ] 3.2 Independent review and repairs
-- [ ] 3.3 Final local check (stop before pushing)
+- [x] 3.2 Independent review and repairs
+- [x] 3.3 Final local check (stop before pushing)
 
 Part sections: `part-backend.md` (1.x), `part-frontend-verify.md` (2.1, 3.x).

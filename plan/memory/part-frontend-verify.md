@@ -27,7 +27,7 @@ Front end files are in `frontend/src/demo/`: `useRagDemo.js` (all state and API 
 - If it goes wrong: record any scenario that could not be run in the handover; do not claim it passed.
 
 ### 3.2 Independent review and repairs
-- Status: not started
+- Status: done
 - Does: a fresh reviewer (the reviewer role, not the builder; if no agent can be spawned, re-read the diff yourself as a fresh reviewer and record that in the handover, then continue) checks the whole change against this plan: prompt safety (escaping, separate blocks, history never evidence), no new server storage, rate limit unchanged, first-question path unchanged, validation caps and messages, front end sends only successful turns, copy is honest. Confirmed findings are repaired and rechecked once.
 - Does not: no review of the landing page or unchanged code.
 - Needs: 3.1
@@ -39,7 +39,7 @@ Front end files are in `frontend/src/demo/`: `useRagDemo.js` (all state and API 
 - If it goes wrong: after two rounds list what is unresolved.
 
 ### 3.3 Final local check (stop before pushing)
-- Status: not started
+- Status: done
 - Does: runs every check once more, replaces the README line that says there is no conversation memory (about line 119) with one saying follow-ups use the last 5 questions, kept only in the browser, updates the handover and writes the owner report, then stops. Pushing is the owner's decision; commit locally only if told.
 - Does not: no commit unless told, never a push, no live-site changes.
 - Needs: 3.2
