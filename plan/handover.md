@@ -28,3 +28,10 @@
 - Prompt injection: system/user split and `<evidence>` tags in `rag.py` (tags inside documents are stripped).
 - `FAKE_OPENAI` is refused when `RENDER` is set (checked at startup in the lifespan).
 - Not covered: no malware scanning; PyMuPDF parses untrusted PDFs (page cap and size cap are the only mitigations).
+
+## Security-test repairs (after 5.2)
+- Text and drawing bombs: PDFs are now read by `pdf_worker.py` in a separate process (`pdf_parser.py`): 10 s limit, at most 2 at once (503 when busy), caps of 30 pages, 200,000 characters, 8 MB decompressed page data, 500 chunks. The lock is held only for the room check and index and list writes (room check repeated there). Embedding also runs outside the lock.
+- Upload attempts (accepted or rejected) are limited before parsing: 30 per hour per address, 120 per hour in total (`config.py`, README).
+- `/health` is async and lock-free. `X-Forwarded-For` joins all header lines and takes the last entry. Every `<` and `>` in document text and source names is escaped in the prompt. Deep JSON gets a 400 (FastAPI already returned 400 at the depth tested here; a `RecursionError` handler was added anyway). Answers no longer render images. The FAKE_OPENAI guard now also fires on first use and for any non-empty `RENDER`.
+- Accepted and left unfixed: bidi characters in display names, trailing-slash redirect, all-zero UUID, the `reset_all` folder-name rule.
+- Not covered: a PDF whose single page takes under 10 s but uses lots of memory in the worker (no memory limit on Windows; the 8 MB content cap and timeout bound it).

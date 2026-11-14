@@ -77,6 +77,20 @@ UPLOAD_LIMIT_PER_VISITOR = 10
 UPLOAD_LIMIT_PER_IP = 20
 UPLOAD_LIMIT_TOTAL = 40
 
+# Upload attempts (accepted OR rejected) before any parsing, per address and in total.
+# Separate from the accepted-upload quotas above, so rejected files cannot be sent for free.
+UPLOAD_ATTEMPT_LIMIT_PER_IP = 30
+UPLOAD_ATTEMPT_LIMIT_TOTAL = 120
+
+# Reading an uploaded PDF (done in a separate process).
+PARSE_TIMEOUT_SECONDS = 10
+MAX_CONCURRENT_PARSES = 2
+# Total text taken from one document, and the chunks made from it.
+MAX_EXTRACTED_CHARACTERS = 200_000
+MAX_CHUNKS = 500
+# Total decompressed page-drawing data. A tiny file can expand to hundreds of MB.
+MAX_CONTENT_BYTES = 8 * 1024 * 1024
+
 # Texts are embedded in groups of this size.
 EMBEDDING_BATCH_SIZE = 64
 
@@ -108,13 +122,19 @@ def docs_enabled() -> bool:
 
 def check_environment() -> None:
     """Refuse to run the OpenAI fakes in the hosted environment."""
-    if fake_openai() and os.environ.get("RENDER"):
-        raise RuntimeError("FAKE_OPENAI must never be set on Render.")
+    fake_openai()
 
 
 def fake_openai() -> bool:
-    """Test and QA switch: replace OpenAI calls with deterministic fakes."""
-    return os.environ.get("FAKE_OPENAI") == "1"
+    """Test and QA switch: replace OpenAI calls with deterministic fakes.
+
+    Refuses to answer True on Render (any non-empty RENDER value), so the fakes
+    can never run in the hosted app even if the startup check was skipped.
+    """
+    enabled = os.environ.get("FAKE_OPENAI") == "1"
+    if enabled and os.environ.get("RENDER"):
+        raise RuntimeError("FAKE_OPENAI must never be set on Render.")
+    return enabled
 
 
 # ---------------------------------------------------------

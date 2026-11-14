@@ -90,6 +90,8 @@ The tests never call OpenAI. They use `FAKE_OPENAI=1`, a switch that replaces th
 - Each browser gets a random visitor ID (kept in local storage, not a login). You only ever see and delete your own uploads.
 - 5 MB per file, 30 pages per PDF, 3 files at a time, PDF only.
 - 20 questions per hour, each up to 500 characters. There are also hourly caps per network address and in total, to keep the demo's cost in check.
+- Every upload attempt counts, even a rejected one: 30 attempts per hour per network address and 120 per hour in total. This keeps hostile files from using up the server.
+- Each PDF is read in a separate process with a 10 second limit, and at most two are read at once (others are asked to retry). A document may hold at most about 200,000 characters of text and 8 MB of decompressed page data.
 - Uploads are removed 30 minutes after you add them, and everything is wiped whenever the server restarts.
 - The text of your documents is sent to OpenAI to build the index and write answers, so keep it to files you are comfortable sharing.
 

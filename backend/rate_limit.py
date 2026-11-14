@@ -28,7 +28,9 @@ def client_ip(request) -> str:
     The first entries are client-made and can be forged, so they are never
     used. Falls back to the socket address.
     """
-    forwarded = request.headers.get("x-forwarded-for", "")
+    # A client can send several header lines; join them all and take the very
+    # last entry, which is the one Render's proxy appended.
+    forwarded = ",".join(request.headers.getlist("x-forwarded-for"))
     entries = [part.strip() for part in forwarded.split(",") if part.strip()]
 
     if entries:
@@ -108,6 +110,16 @@ def check_ask(visitor_id: str, ip: str):
             ),
             (f"ask:ip:{ip}", config.ASK_LIMIT_PER_IP, BUSY_MESSAGE),
             ("ask:total", config.ASK_LIMIT_TOTAL, BUSY_MESSAGE),
+        ]
+    )
+
+
+def check_upload_attempt(ip: str):
+    """Counts every upload request, accepted or not, before any parsing."""
+    limiter.check_and_record(
+        [
+            (f"attempt:ip:{ip}", config.UPLOAD_ATTEMPT_LIMIT_PER_IP, BUSY_MESSAGE),
+            ("attempt:total", config.UPLOAD_ATTEMPT_LIMIT_TOTAL, BUSY_MESSAGE),
         ]
     )
 

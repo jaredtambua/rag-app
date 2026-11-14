@@ -23,6 +23,12 @@ class AnswerError(Exception):
         self.message = message
 
 
+def _escape(text: str) -> str:
+    """Document text must not be able to write or close the evidence tags,
+    however it nests them, so every angle bracket is escaped."""
+    return text.replace("<", "&lt;").replace(">", "&gt;")
+
+
 def build_context(context_blocks: list[ContextBlock]) -> str:
     """
     Convert retrieved context blocks into structured evidence
@@ -35,15 +41,13 @@ def build_context(context_blocks: list[ContextBlock]) -> str:
         chunk_parts = []
 
         for chunk in block.chunks:
-            # A document must not be able to close the evidence tags.
-            text = chunk.text.replace("<evidence>", "").replace("</evidence>", "")
-            chunk_parts.append(f"[Page {chunk.page}]\n{text}")
+            chunk_parts.append(f"[Page {chunk.page}]\n{_escape(chunk.text)}")
 
         block_text = "\n\n".join(chunk_parts)
 
         context_parts.append(
             f"[Evidence Group {block_index}]\n"
-            f"Source: {block.source}\n\n"
+            f"Source: {_escape(block.source)}\n\n"
             f"{block_text}"
         )
 

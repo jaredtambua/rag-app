@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown from "react-markdown"; /* images are not rendered: an answer must not load anything from another site */
 import { FileIcon } from "./icons.jsx";
 
 const LONG_QUOTE = 150;
@@ -55,7 +55,7 @@ export default function AnswerPanel({ answer, citations, isAsking, askedQuestion
       {!isAsking && answer && (
         <>
           <div className="reply">
-            <div className="markdown"><ReactMarkdown>{answer}</ReactMarkdown></div>
+            <div className="markdown"><ReactMarkdown disallowedElements={["img"]}>{answer}</ReactMarkdown></div>
           </div>
 
           {citations.length > 0 && (

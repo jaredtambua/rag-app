@@ -137,6 +137,11 @@ def answer_error_handler(request: Request, error: AnswerError):
     return JSONResponse(status_code=502, content={"detail": error.message})
 
 
+@app.exception_handler(RecursionError)
+def too_deep_handler(request: Request, error: RecursionError):
+    return JSONResponse(status_code=400, content={"detail": "The request could not be read."})
+
+
 @app.exception_handler(rate_limit.RateLimited)
 def rate_limited_handler(request: Request, error: rate_limit.RateLimited):
     return JSONResponse(
@@ -147,7 +152,8 @@ def rate_limited_handler(request: Request, error: rate_limit.RateLimited):
 
 
 @app.get("/health")
-def health_check():
+async def health_check():
+    # async and lock-free: it answers even while uploads are being read
     return {"status": "ok"}
 
 
@@ -184,6 +190,9 @@ def upload_documents(
 ):
     ip = rate_limit.client_ip(request)
     quota_used = False
+
+    # Every attempt counts, even ones that will be rejected: reading a file costs CPU.
+    rate_limit.check_upload_attempt(ip)
 
     def use_quota():
         # One upload unit per request, taken when the first file passes

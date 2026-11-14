@@ -39,19 +39,31 @@ def _record(chunk_id, text, metadata):
     }
 
 
-def add_document(visitor_id, doc_id, uploaded_at, source, chunk_records):
-    """Embed (in batches) and store all chunks of one document."""
+def embed_records(chunk_records):
+    """Embed all chunk texts, in batches. Slow (network): call outside the lock."""
+    embeddings = []
+    size = config.EMBEDDING_BATCH_SIZE
+
+    for start in range(0, len(chunk_records), size):
+        batch = chunk_records[start : start + size]
+        embeddings.extend(embed_texts([record["text"] for record in batch]))
+
+    return embeddings
+
+
+def add_document(visitor_id, doc_id, uploaded_at, source, chunk_records, embeddings):
+    """Store all chunks of one document with their embeddings. Quick: hold the lock."""
     collection = get_collection()
 
     size = config.EMBEDDING_BATCH_SIZE
 
     for start in range(0, len(chunk_records), size):
         batch = chunk_records[start : start + size]
-        embeddings = embed_texts([record["text"] for record in batch])
+        batch_embeddings = embeddings[start : start + size]
 
         collection.add(
             ids=[record["id"] for record in batch],
-            embeddings=embeddings,
+            embeddings=batch_embeddings,
             documents=[record["text"] for record in batch],
             metadatas=[
                 {

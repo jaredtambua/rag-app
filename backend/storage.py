@@ -18,14 +18,14 @@ import clients
 import clock
 import config
 import vector_store
-from document_processing import build_chunk_records, count_pages
+import pdf_parser
+from document_processing import build_chunk_records
 from uploads import (
     MSG_DUPLICATE,
-    MSG_INVALID_PDF,
     MSG_NO_TEXT,
     MSG_PROCESSING_FAILED,
     MSG_TOO_MANY_FILES,
-    MSG_TOO_MANY_PAGES,
+    MSG_TOO_MUCH_TEXT,
     UploadRejected,
 )
 
@@ -96,69 +96,82 @@ def has_documents(visitor_id: str) -> bool:
         return bool(_live_documents(visitor_id))
 
 
+def _check_room(visitor_id: str, display_name: str) -> None:
+    """Refuse a fourth file or a duplicate name. Call with the lock held."""
+    current = _live_documents(visitor_id)
+
+    if len(current) >= config.MAX_FILES_PER_VISITOR:
+        raise UploadRejected(409, MSG_TOO_MANY_FILES)
+
+    if any(doc.name.lower() == display_name.lower() for doc in current):
+        raise UploadRejected(400, MSG_DUPLICATE)
+
+
 def add_document(
     visitor_id: str, display_name: str, data: bytes, on_validated=None
 ) -> dict:
     """Check, save and index one PDF for a visitor.
 
+    The slow work (reading the PDF in a separate process, embedding) happens
+    OUTSIDE the lock so one upload never stalls other visitors. The lock is held
+    only for the room check and the index and list writes, and the room check is
+    repeated there so two simultaneous uploads cannot both pass.
+
     on_validated, if given, is called once the file has passed every check
-    and before the (paid) indexing starts; it may raise to stop the upload.
+    and before the (paid) embedding starts; it may raise to stop the upload.
 
     Raises UploadRejected with a user-facing message. Whatever happens, a
     failed upload leaves no file and no index entries behind.
     """
     doc_id = uuid.uuid4().hex
 
+    # A cheap early refusal, before any work is done.
     with LOCK:
-        # The count and duplicate checks run inside the lock so two
-        # simultaneous uploads cannot both pass.
-        current = _live_documents(visitor_id)
+        _check_room(visitor_id, display_name)
 
-        if len(current) >= config.MAX_FILES_PER_VISITOR:
-            raise UploadRejected(409, MSG_TOO_MANY_FILES)
+    path = _file_path(visitor_id, doc_id)
 
-        if any(doc.name.lower() == display_name.lower() for doc in current):
-            raise UploadRejected(400, MSG_DUPLICATE)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
 
-        path = _file_path(visitor_id, doc_id)
+        pages = pdf_parser.parse_pdf(path)
+        chunk_records = build_chunk_records(pages, doc_id, display_name)
+
+        if not chunk_records:
+            raise UploadRejected(400, MSG_NO_TEXT)
+
+        if len(chunk_records) > config.MAX_CHUNKS:
+            raise UploadRejected(400, MSG_TOO_MUCH_TEXT)
+
+        if on_validated:
+            on_validated()
+
         uploaded_at = clock.now()
 
         try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(data)
+            embeddings = vector_store.embed_records(chunk_records)
+        except Exception as error:
+            logger.error("Embedding failed (%s)", type(error).__name__)
+            raise UploadRejected(500, MSG_PROCESSING_FAILED)
 
-            try:
-                pages = count_pages(path)
-
-                if pages > config.MAX_PAGES:
-                    raise UploadRejected(400, MSG_TOO_MANY_PAGES)
-
-                chunk_records = build_chunk_records(path, doc_id, display_name)
-            except UploadRejected:
-                raise
-            except Exception:
-                raise UploadRejected(400, MSG_INVALID_PDF)
-
-            if not chunk_records:
-                raise UploadRejected(400, MSG_NO_TEXT)
-
-            if on_validated:
-                on_validated()
+        with LOCK:
+            _check_room(visitor_id, display_name)
 
             try:
                 vector_store.add_document(
-                    visitor_id, doc_id, uploaded_at, display_name, chunk_records
+                    visitor_id, doc_id, uploaded_at, display_name, chunk_records, embeddings
                 )
             except Exception as error:
                 logger.error("Indexing failed (%s)", type(error).__name__)
                 raise UploadRejected(500, MSG_PROCESSING_FAILED)
-        except BaseException:
-            _discard(visitor_id, doc_id)
-            raise
 
-        _registry.setdefault(visitor_id, {})[doc_id] = Document(
-            doc_id, display_name, uploaded_at
-        )
+            _registry.setdefault(visitor_id, {})[doc_id] = Document(
+                doc_id, display_name, uploaded_at
+            )
+    except BaseException:
+        _discard(visitor_id, doc_id)
+        raise
 
     return {"id": doc_id, "name": display_name, "uploaded_at": uploaded_at}
 
@@ -168,7 +181,8 @@ def _discard(visitor_id: str, doc_id: str) -> bool:
     ok = True
 
     try:
-        vector_store.delete_document(visitor_id, doc_id)
+        with LOCK:
+            vector_store.delete_document(visitor_id, doc_id)
     except Exception as error:
         ok = False
         logger.error("Index cleanup failed (%s)", type(error).__name__)

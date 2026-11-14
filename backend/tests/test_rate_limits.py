@@ -151,7 +151,13 @@ def test_eleventh_upload_in_an_hour_is_refused(client, data_dir):
     assert not [p for p in (data_dir / "documents").rglob("*") if p.is_file()]
 
 
-def test_rejected_uploads_cost_nothing(client):
+def test_rejected_uploads_cost_nothing(client, monkeypatch):
+    # Rejected files never use the accepted-upload quota. (They do count as
+    # attempts, which have their own limit: raised here to test the quota alone.)
+    import config
+
+    monkeypatch.setattr(config, "UPLOAD_ATTEMPT_LIMIT_PER_IP", 1000)
+    monkeypatch.setattr(config, "UPLOAD_ATTEMPT_LIMIT_TOTAL", 1000)
     v = new_visitor()
     for _ in range(15):
         assert upload(client, v, "bad.pdf", b"not a pdf").status_code == 400
@@ -208,7 +214,8 @@ def test_client_ip_uses_last_entry_and_falls_back():
 
     class Req:
         def __init__(self, xff, host):
-            self.headers = {} if xff is None else {"x-forwarded-for": xff}
+            lines = [] if xff is None else [xff]
+            self.headers = type("H", (), {"getlist": lambda self, name: lines})()
             self.client = None if host is None else type("C", (), {"host": host})()
 
     assert rate_limit.client_ip(Req("1.1.1.1, 2.2.2.2", "9.9.9.9")) == "2.2.2.2"
