@@ -39,7 +39,7 @@ Files in `frontend/src/` (`demo/`, `landing/`, `routing.js`, `index.css`) and `f
 - If it goes wrong: n/a
 
 ### 3.4 Share preview, favicon, dev port, unused files
-- Status: not started
+- Status: done
 - Does: LinkedIn and other link previews show a title, description and a 1200x630 image; a PNG favicon exists beside the SVG; the dev server is fixed to port 5173; unused template files are removed.
 - Does not: no custom domain work.
 - Needs: nothing
