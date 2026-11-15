@@ -27,7 +27,7 @@
 .scene-text.on a, .scene-text.on button, .scene-text.on p, .scene-text.on h1, .scene-text.on h2 { pointer-events: auto; }
 .scene-text .btn { margin-top: var(--s5); }
 
-.t0 .copy { top: 50%; left: var(--gutter); width: min(42vw, 560px); margin-top: -2vh; transform: translateY(-50%); }
+.t0 .copy { top: 50%; left: calc(var(--gutter) + 2.5vw); width: min(38vw, 500px); margin-top: -2vh; transform: translateY(-50%); }
 /* stops 1 and 3: the cloud sits on the left, the words in a column on the right, both edges on the page gutter */
 .t1 .copy, .t3 .copy { left: 60vw; right: var(--gutter); top: 50%; transform: translateY(-50%); max-width: 480px; }
 .t1 .h-md, .t3 .h-md { text-wrap: balance; }
