@@ -8,12 +8,24 @@ import { STOP_SHAPES, stopUnit } from "./stops.js";
 
 const COLORS = ["#8052ff", "#ffb829", "#15846e", "#d94fd0", "#4f8dff"];
 /* where the cloud sits at each stop: [centre x, centre y, size, widest as a share of the width, tallest as a share of the height], as fractions of the screen */
-const RECT_DESKTOP = [[.72, .5, .9, 1, 1], [.29, .52, .8, .56, 1], [.5, .5, .94, .72, 1], [.29, .5, .8, .56, 1], [.5, .34, .55, 1, 1]];
+const RECT_DESKTOP = [[.72, .5, .9, .6, 1], [.29, .52, .8, .56, 1], [.5, .5, .94, .72, 1], [.29, .5, .8, .56, 1], [.5, .34, .55, 1, 1]];
 const RECT_PHONE = [[.5, .27, .85, 1, .5], [.5, .3, 1, 1, .56], [.5, .5, 1.2, 1.2, .64], [.5, .23, .9, 1, .4], [.5, .26, .7, 1, .4]];
 const LAST = STOP_SHAPES.length - 1;
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+/* The stagger transitions release triangles in index order, so the points of the shapes they join are put in an order
+   that makes the release read as a sweep: the network and the ring by angle around their centre, the grid left to right. */
+function sortPoints(arr, name) {
+  const n = arr.length / 3, key = [];
+  if (name === "network" || name === "ring") for (let k = 0; k < n; k++) key.push(Math.atan2(arr[k * 3 + 1], arr[k * 3]));
+  else if (name === "grid") for (let k = 0; k < n; k++) key.push(arr[k * 3] + arr[k * 3 + 1] * .001);
+  else return arr;
+  const order = key.map((_, k) => k).sort((p, q) => key[p] - key[q]), out = new Float32Array(arr.length);
+  order.forEach((from, to) => { out[to * 3] = arr[from * 3]; out[to * 3 + 1] = arr[from * 3 + 1]; out[to * 3 + 2] = arr[from * 3 + 2]; });
+  return out;
+}
 
 function tri(ctx, x, y, s, rot) {
   ctx.moveTo(x + Math.cos(rot) * s, y + Math.sin(rot) * s);
@@ -62,18 +74,21 @@ export function startCloud(canvas, ambientCanvas) {
     W = window.innerWidth; H = window.innerHeight; phone = W <= 900;
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     unit = stopUnit();
+    RECT_DESKTOP[0][0] = clamp(.72 - (W - 1000) / 400 * .06, .66, .72); /* the brain sits a little nearer the middle on wide screens */
   }
   resize(); window.addEventListener("resize", resize);
 
   const N = phone ? 1200 : 3200;
-  const shapes = STOP_SHAPES.map((n) => TesselShapes.sample(n, N));
+  const shapes = STOP_SHAPES.map((n) => sortPoints(TesselShapes.sample(n, N), n));
   const scatter = TesselShapes.sample("scatter", N);
   const P = [];
   for (let i = 0; i < N; i++) {
-    P.push({ s: 1.8 + Math.random() * 2.4, r: Math.random() * 6.283, c: (Math.random() * COLORS.length) | 0, ph: Math.random() * 6.283, d: Math.random() * .35, w: [rnd(-1, 1), rnd(-1, 1), rnd(-1, 1)] });
+    P.push({ s: 1.8 + Math.random() * 2.4, r: Math.random() * 6.283, c: (Math.random() * COLORS.length) | 0, ph: Math.random() * 6.283, d: Math.random() * .35, w: [rnd(-1, 1), rnd(-1, 1), rnd(-1, 1)], i: i / N });
   }
   const brainSignals = createSignals(shapes[0]);
   const motionPoint = { x: 0, y: 0, z: 0, spin: 0 };
+  const frameInfo = { ca: [0, 0], cb: [0, 0], g: [0, 0] };
+  const rectSide = (r) => Math.min(r[2] * Math.min(W, H), r[3] * W, r[4] * H);
   let t0 = null, yawBase = 0, pitch = 0, vYaw = 0, vPitch = 0, lean = 0, leanT = 0, dragging = false, last = null;
 
   function frame(now) {
@@ -87,6 +102,12 @@ export function startCloud(canvas, ambientCanvas) {
     const side = Math.min(lerp(2) * Math.min(W, H), lerp(3) * W, lerp(4) * H);
     if (t0 === null) t0 = now;
     const A = shapes[i], B = shapes[i + 1], D = side * 2.4, Zr = side * .3;
+    /* where the two shapes sit and where the screen centre is, measured in the current frame (units of the current size) */
+    const sa = rectSide(ra) / side, sb = rectSide(rb) / side;
+    const oax = (ra[0] * W - cx) / side, oay = (ra[1] * H - cy) / side, obx = (rb[0] * W - cx) / side, oby = (rb[1] * H - cy) / side;
+    frameInfo.ca[0] = oax; frameInfo.ca[1] = oay; frameInfo.cb[0] = obx; frameInfo.cb[1] = oby;
+    frameInfo.g[0] = (W / 2 - cx) / side; frameInfo.g[1] = (H / 2 - cy) / side;
+    const anchored = i > 0;
     const brainWeight = still ? 0 : clamp(1 - p * 4, 0, 1);
     const brainEvents = brainSignals.update(now, brainWeight > 0 && now - t0 > 2200);
     const lit = [];
@@ -100,7 +121,8 @@ export function startCloud(canvas, ambientCanvas) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
     for (let k = 0; k < N; k++) {
       const q = P[k], j = k * 3;
-      position(i, m, A[j], A[j + 1], A[j + 2], B[j], B[j + 1], B[j + 2], q, motionPoint);
+      if (anchored) position(i, m, oax + A[j] * sa, oay + A[j + 1] * sa, A[j + 2] * sa, obx + B[j] * sb, oby + B[j + 1] * sb, B[j + 2] * sb, q, motionPoint, frameInfo);
+      else position(i, m, A[j], A[j + 1], A[j + 2], B[j], B[j + 1], B[j + 2], q, motionPoint, frameInfo);
       let x = motionPoint.x, y = motionPoint.y, z = motionPoint.z;
       if (!still) { /* at the start the triangles gather in from a wide scatter */
         const ie = 1 - Math.pow(1 - clamp((now - t0 - q.d * 700) / 2000, 0, 1), 3);
