@@ -45,3 +45,8 @@ MAX_SELECTED is now 20 (p2d: broad summaries were limited by the 10-chunk cap); 
 - Why (p3): only 20 chunks were fetched before the cap of 20 applied, so the cap did nothing for broad questions.
 - Fix: 40 candidates are fetched; the best 20 are kept (MAX_SELECTED); the 30,000 character trim is unchanged.
 - Known limit: retrieval uses ONE embedding of the question, so a two-part question ("invoice days plus expenses days") mostly pulls chunks for the stronger half. Proposed follow-up: split compound questions into sub-queries with one extra model call, retrieve for each, and merge.
+
+### 10. Distance cut-off removed in effect (config.py MAX_DISTANCE 1.0 to 4.0) and cap 30
+- Why (p3c): the collection uses Chroma's default squared-L2 metric (range 0 to 4 for unit vectors). Useful chunks score 0.9 to 1.6, so a cut-off of 1.0 dropped nearly everything and the best 3 were used for every question; the caps never mattered.
+- Fix: MAX_DISTANCE is 4.0 (cannot filter anything) and MAX_SELECTED is 30; the 30,000 character trim still protects. No documents still means no model call; visitor and expiry scoping unchanged.
+- Consequence: unrelated questions now always reach the model, so "not found" relies on the prompt (p2c/p2d showed it works), and cost per question rises (up to about 8,000 tokens of context).

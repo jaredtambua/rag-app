@@ -26,9 +26,25 @@ def test_selection_is_capped_to_the_best_chunks():
     assert [r["chunk_index"] for _, r in selected] == list(range(MAX_SELECTED))
 
 
-def test_fallback_still_returns_the_best_three_when_none_are_close():
-    results = [(1.5 + i * 0.01, record(i)) for i in range(10)]
-    assert len(retrieval.select_relevant_chunks(results)) == 3
+def test_distances_above_one_are_no_longer_dropped():
+    results = [(1.0 + i * 0.1, record(i)) for i in range(10)]  # 1.0 to 1.9
+    selected = retrieval.select_relevant_chunks(results)
+    assert [r["chunk_index"] for _, r in selected] == list(range(10))
+
+
+def test_even_the_worst_possible_distance_is_kept():
+    assert len(retrieval.select_relevant_chunks([(4.0, record(0))])) == 1
+
+
+def test_small_document_with_far_chunks_includes_every_chunk_up_to_the_cap(monkeypatch):
+    chunks = [record(i, size=100) for i in range(25)]
+    candidates = [(1.2 + i * 0.03, chunks[i]) for i in range(25)]  # all above 1.0
+    monkeypatch.setattr(retrieval.storage, "has_documents", lambda v: True)
+    monkeypatch.setattr(retrieval, "embed_text", lambda q: [0.0])
+    monkeypatch.setattr(retrieval, "retrieve_chunks", lambda *a, **k: candidates)
+    monkeypatch.setattr(retrieval, "get_chunk", lambda v, d, i: chunks[i] if 0 <= i < 25 else None)
+    blocks = retrieval.retrieve_context("v", "an unrelated question")
+    assert [c.chunk_index for b in blocks for c in b.chunks] == list(range(25))
 
 
 def test_small_document_all_relevant_still_yields_context(monkeypatch):
@@ -109,10 +125,10 @@ def test_a_document_of_about_15000_characters_is_sent_whole(monkeypatch):
     assert [c.page for c in blocks[0].chunks] == [i // 4 + 1 for i in range(19)]
 
 
-def test_forty_candidates_are_fetched_and_the_best_twenty_kept(monkeypatch):
+def test_forty_candidates_are_fetched_and_the_best_thirty_kept(monkeypatch):
     from config import RETRIEVAL_CANDIDATES
 
-    assert RETRIEVAL_CANDIDATES == 40 and MAX_SELECTED == 20
+    assert RETRIEVAL_CANDIDATES == 40 and MAX_SELECTED == 30
     chunks = [record(i, size=100) for i in range(60)]
     candidates = [(0.3 + i * 0.01, chunks[i]) for i in range(40)]  # all close; ranked best first
     asked = {}
@@ -127,7 +143,7 @@ def test_forty_candidates_are_fetched_and_the_best_twenty_kept(monkeypatch):
     monkeypatch.setattr(retrieval, "get_chunk", lambda v, d, i: chunks[i] if 0 <= i < 60 else None)
 
     selected = retrieval.select_relevant_chunks(candidates)
-    assert [r["chunk_index"] for _, r in selected] == list(range(20))  # best 20 of 40
+    assert [r["chunk_index"] for _, r in selected] == list(range(30))  # best 30 of 40
 
     blocks = retrieval.retrieve_context("v", "two part question")
     assert asked["limit"] == 40  # more than the old 20 are considered

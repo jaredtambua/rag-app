@@ -187,14 +187,13 @@ CHUNK_OVERLAP = 150
 RETRIEVAL_CANDIDATES = 40
 
 
-# Maximum Chroma distance normally considered relevant.
-#
-# Lower distance = greater similarity.
-#
-# NOTE:
-# This is an initial heuristic rather than a universally correct
-# value. We should inspect real retrieval results and tune it later.
-MAX_DISTANCE = 1.0
+# Largest Chroma distance we still keep. The collection uses Chroma's default
+# metric (squared L2 on unit-length embeddings), whose range is 0 to 4. Useful
+# chunks score about 0.9 to 1.6 on real documents, so any cut-off near 1.0
+# threw almost everything away. 4.0 can never filter anything: the
+# MAX_SELECTED cap and the character limit choose what the model sees, and the
+# prompt makes it refuse when the answer is not there.
+MAX_DISTANCE = 4.0
 
 
 # If fewer than this many chunks pass MAX_DISTANCE,
@@ -205,7 +204,7 @@ MIN_RESULTS = 3
 # Never keep more than this many of the best chunks before neighbours are
 # added. On a small document nearly every chunk is "close", and without a cap
 # the whole document would be sent.
-MAX_SELECTED = 20
+MAX_SELECTED = 30
 
 
 # Number of chunks immediately before and after a selected
