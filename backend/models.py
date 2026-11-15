@@ -16,6 +16,9 @@ class RetrievedChunk(BaseModel):
     page: int
     chunk_index: int
     text: str
+    # Distance of the match this chunk came from (neighbours inherit it).
+    # Only used to decide what to trim when a block is too big.
+    distance: float = 0.0
 
 
 class ContextBlock(BaseModel):
