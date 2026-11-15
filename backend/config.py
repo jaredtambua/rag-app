@@ -202,8 +202,8 @@ MIN_RESULTS = 3
 
 # Never keep more than this many of the best chunks before neighbours are
 # added. On a small document nearly every chunk is "close", and without a cap
-# the whole document would be sent (and then dropped for being too big).
-MAX_SELECTED = 6
+# the whole document would be sent.
+MAX_SELECTED = 10
 
 
 # Number of chunks immediately before and after a selected
@@ -222,5 +222,6 @@ NEIGHBOR_WINDOW = 1
 # evidence that we will provide to the generation layer.
 #
 # Context blocks are considered in relevance order until
-# this budget is reached.
-MAX_CONTEXT_CHARACTERS = 12_000
+# this budget is reached. 30,000 characters is roughly 8,000 tokens; even a
+# 30-page document stays well under the model's limit and costs little.
+MAX_CONTEXT_CHARACTERS = 30_000

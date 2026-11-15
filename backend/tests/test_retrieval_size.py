@@ -15,7 +15,7 @@ def record(i, size=800, page=None):
     }
 
 
-def small_document(count=20):
+def small_document(count=60):
     return [record(i) for i in range(count)]
 
 
@@ -32,16 +32,16 @@ def test_fallback_still_returns_the_best_three_when_none_are_close():
 
 
 def test_small_document_all_relevant_still_yields_context(monkeypatch):
-    chunks = small_document()  # 20 x 800 = 16,000 characters, more than the limit
+    chunks = small_document()  # 60 x 800 = 48,000 characters, more than the limit
     assert sum(len(c["text"]) for c in chunks) > MAX_CONTEXT_CHARACTERS
     # every chunk is close; the best are chunks 10, 0, 5 ... in that order
-    order = [10, 0, 5, 15, 1, 11] + [i for i in range(20) if i not in (10, 0, 5, 15, 1, 11)]
+    order = [10, 0, 5, 15, 1, 11] + [i for i in range(60) if i not in (10, 0, 5, 15, 1, 11)]
     candidates = [(0.4 + n * 0.02, chunks[i]) for n, i in enumerate(order)]
 
     monkeypatch.setattr(retrieval.storage, "has_documents", lambda v: True)
     monkeypatch.setattr(retrieval, "embed_text", lambda q: [0.0])
     monkeypatch.setattr(retrieval, "retrieve_chunks", lambda *a, **k: candidates)
-    monkeypatch.setattr(retrieval, "get_chunk", lambda v, d, i: chunks[i] if 0 <= i < 20 else None)
+    monkeypatch.setattr(retrieval, "get_chunk", lambda v, d, i: chunks[i] if 0 <= i < 60 else None)
 
     blocks = retrieval.retrieve_context("v", "how many people took part?")
     assert blocks
@@ -63,22 +63,22 @@ def make_block(indexes, distances):
 
 
 def test_oversize_block_is_trimmed_not_dropped_and_keeps_best_chunk():
-    # 20 contiguous chunks (16,000 chars); chunk 10 matched best, neighbours inherit worse scores
-    distances = [0.9 - 0.04 * min(i, 20 - i) for i in range(20)]
-    block = make_block(range(20), distances)
+    # 50 contiguous chunks (40,000 chars); chunk 25 matched best, neighbours inherit worse scores
+    distances = [0.9 - 0.01 * min(i, 50 - i) for i in range(50)]
+    block = make_block(range(50), distances)
     limited = retrieval.limit_context_size([block])
     assert len(limited) == 1
     kept = limited[0].chunks
     assert sum(len(c.text) for c in kept) <= MAX_CONTEXT_CHARACTERS
     indexes = [c.chunk_index for c in kept]
-    assert 10 in indexes
+    assert 25 in indexes
     assert indexes == sorted(indexes) and indexes == list(range(indexes[0], indexes[-1] + 1))
     assert [c.page for c in kept] == indexes  # page labels stay with their chunks
 
 
 def test_second_block_is_trimmed_to_the_remaining_budget():
-    first = make_block(range(0, 10), [0.5] * 10)  # 8,000
-    second = make_block(range(30, 40), [0.7 + 0.01 * i for i in range(10)])  # 8,000
+    first = make_block(range(0, 20), [0.5] * 20)  # 16,000
+    second = make_block(range(30, 50), [0.7 + 0.01 * i for i in range(20)])  # 16,000
     limited = retrieval.limit_context_size([first, second])
     assert len(limited) == 2
     assert sum(len(c.text) for b in limited for c in b.chunks) <= MAX_CONTEXT_CHARACTERS
@@ -89,3 +89,21 @@ def test_second_block_is_trimmed_to_the_remaining_budget():
 def test_blocks_that_fit_are_untouched():
     block = make_block(range(5), [0.5] * 5)
     assert retrieval.limit_context_size([block]) == [block]
+
+
+def test_a_document_of_about_15000_characters_is_sent_whole(monkeypatch):
+    chunks = [record(i) for i in range(19)]  # 19 x 800 = 15,200 characters
+    # the ten best chunks are every other chunk, so their neighbours cover the lot
+    best = list(range(0, 19, 2))
+    rest = [i for i in range(19) if i not in best]
+    candidates = [(0.4 + n * 0.02, chunks[i]) for n, i in enumerate((best + rest)[:20])]
+
+    monkeypatch.setattr(retrieval.storage, "has_documents", lambda v: True)
+    monkeypatch.setattr(retrieval, "embed_text", lambda q: [0.0])
+    monkeypatch.setattr(retrieval, "retrieve_chunks", lambda *a, **k: candidates)
+    monkeypatch.setattr(retrieval, "get_chunk", lambda v, d, i: chunks[i] if 0 <= i < 19 else None)
+
+    blocks = retrieval.retrieve_context("v", "summarise the document")
+    assert len(blocks) == 1
+    assert [c.chunk_index for c in blocks[0].chunks] == list(range(19))
+    assert [c.page for c in blocks[0].chunks] == [i // 4 + 1 for i in range(19)]
