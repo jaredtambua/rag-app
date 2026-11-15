@@ -56,8 +56,8 @@
       y = .26 - k * .09 + rnd(-.02, .02); x = rnd(0, len);
       if (Math.random() < .25) { x = len; y = .26 - k * .09 + rnd(-.04, .04); }
     }
-    var tilt = .42, c = Math.cos(tilt), sn = Math.sin(tilt), k = .7;   /* the key is drawn at 70% of its first size */
-    return [.31 + (x * c - y * sn) * k, .02 + (x * sn + y * c) * k, z * k];
+    var tilt = .42, c = Math.cos(tilt), sn = Math.sin(tilt), size = .7;   /* the key is drawn at 70% of its first size */
+    return [.31 + (x * c - y * sn) * size, .02 + (x * sn + y * c) * size, z * size];
   }
 
   /* ---- a padlock with a key beside it: the privacy scene ---- */
