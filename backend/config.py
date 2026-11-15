@@ -177,12 +177,14 @@ CHUNK_OVERLAP = 150
 # Retrieval
 # ---------------------------------------------------------
 
-# Number of candidate chunks to initially retrieve from Chroma.
+# Number of candidate chunks to initially retrieve from Chroma (one query
+# embedding, so a two-part question mostly surfaces chunks for one part).
+# A visitor has at most 3 files of 30 pages, so 40 is cheap.
 #
 # Previously we retrieved only TOP_K = 3. We now deliberately
 # retrieve a larger candidate set because later stages of the
 # retrieval pipeline will filter and process these results.
-RETRIEVAL_CANDIDATES = 20
+RETRIEVAL_CANDIDATES = 40
 
 
 # Maximum Chroma distance normally considered relevant.

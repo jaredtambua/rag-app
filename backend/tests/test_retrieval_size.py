@@ -107,3 +107,28 @@ def test_a_document_of_about_15000_characters_is_sent_whole(monkeypatch):
     assert len(blocks) == 1
     assert [c.chunk_index for c in blocks[0].chunks] == list(range(19))
     assert [c.page for c in blocks[0].chunks] == [i // 4 + 1 for i in range(19)]
+
+
+def test_forty_candidates_are_fetched_and_the_best_twenty_kept(monkeypatch):
+    from config import RETRIEVAL_CANDIDATES
+
+    assert RETRIEVAL_CANDIDATES == 40 and MAX_SELECTED == 20
+    chunks = [record(i, size=100) for i in range(60)]
+    candidates = [(0.3 + i * 0.01, chunks[i]) for i in range(40)]  # all close; ranked best first
+    asked = {}
+
+    def fake_retrieve(visitor_id, embedding, newer_than, limit):
+        asked["limit"] = limit
+        return candidates
+
+    monkeypatch.setattr(retrieval.storage, "has_documents", lambda v: True)
+    monkeypatch.setattr(retrieval, "embed_text", lambda q: [0.0])
+    monkeypatch.setattr(retrieval, "retrieve_chunks", fake_retrieve)
+    monkeypatch.setattr(retrieval, "get_chunk", lambda v, d, i: chunks[i] if 0 <= i < 60 else None)
+
+    selected = retrieval.select_relevant_chunks(candidates)
+    assert [r["chunk_index"] for _, r in selected] == list(range(20))  # best 20 of 40
+
+    blocks = retrieval.retrieve_context("v", "two part question")
+    assert asked["limit"] == 40  # more than the old 20 are considered
+    assert blocks

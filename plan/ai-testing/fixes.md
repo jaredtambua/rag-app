@@ -40,3 +40,8 @@ Source diagnosis: p2b.md (scratchpad aitest results). Backend tests: `.venv\Scri
 
 ### 8. Cap raised again
 MAX_SELECTED is now 20 (p2d: broad summaries were limited by the 10-chunk cap); the 30,000 character limit and trimming still protect against oversize.
+
+### 9. Candidate pool 20 to 40 (config.py RETRIEVAL_CANDIDATES)
+- Why (p3): only 20 chunks were fetched before the cap of 20 applied, so the cap did nothing for broad questions.
+- Fix: 40 candidates are fetched; the best 20 are kept (MAX_SELECTED); the 30,000 character trim is unchanged.
+- Known limit: retrieval uses ONE embedding of the question, so a two-part question ("invoice days plus expenses days") mostly pulls chunks for the stronger half. Proposed follow-up: split compound questions into sub-queries with one extra model call, retrieve for each, and merge.
