@@ -3,7 +3,7 @@ import FirstRun from "./FirstRun.jsx";
 const EXAMPLES = ["Summarise this document", "What are the key points?", "What does it say about risks?"];
 
 /* What the conversation pane shows before the first question: first run guides to an upload, later it offers a start. */
-export default function EmptyState({ loading, waking, failed, onRetry, firstRun, count, onPick, onExample, upload }) {
+export default function EmptyState({ loading, waking, failed, onRetry, firstRun, count, onExample, upload }) {
   if (loading) {
     return (
       <div className="empty-state">
@@ -25,7 +25,7 @@ export default function EmptyState({ loading, waking, failed, onRetry, firstRun,
     );
   }
 
-  if (firstRun) return <FirstRun {...upload} onPick={onPick} />;
+  if (firstRun) return <FirstRun {...upload} />;
 
   return (
     <div className="empty-state">

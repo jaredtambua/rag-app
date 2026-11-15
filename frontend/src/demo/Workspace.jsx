@@ -38,6 +38,8 @@ export default function Workspace({ onNavigate }) {
   const failed = demo.documentsStatus === "failed";
   const firstRun = demo.documentsStatus === "ready" && count === 0;
   /* the ask box opens once the server is up and there is a document to ask about */
+  /* the first-run screen is the one place to add a file while it is up; the documents column stays a quiet list */
+  const firstRunShown = firstRun && !demo.thread.some((item) => item.kind === "turn");
   const askLocked = loading || failed || firstRun;
   const turnCount = demo.thread.filter((item) => item.kind === "turn").length;
   const hasTurn = turnCount > 0;
@@ -116,7 +118,7 @@ export default function Workspace({ onNavigate }) {
       <div className="layout">
         {!compact && (
           <aside className="side-col" aria-label="Documents">
-            <Sidebar demo={demo} inputRef={inputRef} />
+            <Sidebar demo={demo} inputRef={inputRef} hideUpload={firstRunShown} />
           </aside>
         )}
 
@@ -128,7 +130,7 @@ export default function Workspace({ onNavigate }) {
             <div className="thread-inner">
               {hasTurn
                 ? <Thread items={demo.thread} isAsking={demo.isAsking} onRetry={retry} onAddPdf={pickFile} noDocuments={firstRun} />
-                : <EmptyState loading={loading} waking={demo.waking} failed={failed} onRetry={demo.retryConnect} firstRun={firstRun} count={count} onPick={pickFile} onExample={fillExample} upload={upload} />}
+                : <EmptyState loading={loading} waking={demo.waking} failed={failed} onRetry={demo.retryConnect} firstRun={firstRun} count={count} onExample={fillExample} upload={upload} />}
             </div>
           </div>
           <div className="dock">
@@ -152,7 +154,7 @@ export default function Workspace({ onNavigate }) {
         <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="Documents">
           <Toasts inline notice={demo.notice} onDismissNotice={() => demo.setNotice("")} />
           <ErrorAlert message={demo.error} onDone={clearError} />
-          <Sidebar demo={demo} inputRef={inputRef} />
+          <Sidebar demo={demo} inputRef={inputRef} hideUpload={firstRunShown} />
         </Sheet>
       )}
     </div>

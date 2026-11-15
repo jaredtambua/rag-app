@@ -106,6 +106,7 @@
 .drop-target .btn { margin-top: var(--s1); min-width: 200px; pointer-events: none; }
 .drop-target:hover .btn, .drop.is-dragging .btn { background: var(--iris-hover); }
 .drop-target:active .btn { transform: scale(.97); }
+.when-touch { display: none; }
 .drop-hint { max-width: 420px; color: var(--ash); font-size: 13px; line-height: 1.5; text-wrap: balance; }
 
 .drop-ready { position: relative; z-index: 1; display: grid; gap: var(--s3); padding: var(--s4); }
@@ -136,7 +137,7 @@
 .steps li:first-child .step-no { background: var(--iris); border-color: var(--iris); color: var(--white); }
 .step-body { display: grid; gap: 4px; max-width: 200px; }
 .step-body strong { font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
-.step-body span { color: var(--ash); font-size: 14px; line-height: 1.45; }
+.step-body span { text-wrap: balance; color: var(--ash); font-size: 14px; line-height: 1.45; }
 .firstrun .demo-note { justify-self: center; max-width: 440px; padding-top: var(--s1); color: var(--ash); font-size: 13px; line-height: 1.5; text-wrap: balance; }
 
 @media (max-height: 820px) and (min-width: 641px) {
@@ -149,6 +150,11 @@
 
 @media (max-height: 790px) and (min-width: 641px) {
   .drop-icon { display: none; }
+}
+
+@media (max-width: 860px), (pointer: coarse) {
+  .when-pointer { display: none; }
+  .when-touch { display: inline; }
 }
 
 @media (max-width: 640px) {
