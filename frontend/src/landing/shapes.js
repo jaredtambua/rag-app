@@ -56,13 +56,13 @@
       y = .26 - k * .09 + rnd(-.02, .02); x = rnd(0, len);
       if (Math.random() < .25) { x = len; y = .26 - k * .09 + rnd(-.04, .04); }
     }
-    var tilt = .42, c = Math.cos(tilt), sn = Math.sin(tilt);
-    return [.34 + x * c - y * sn, .02 + x * sn + y * c, z];
+    var tilt = .42, c = Math.cos(tilt), sn = Math.sin(tilt), k = .7;   /* the key is drawn at 70% of its first size */
+    return [.31 + (x * c - y * sn) * k, .02 + (x * sn + y * c) * k, z * k];
   }
 
   /* ---- a padlock with a key beside it: the privacy scene ---- */
   function lockAndKey() {
-    if (Math.random() < .36) return key();
+    if (Math.random() < .27) return key();
     var p = padlock();
     if (!p) return null;
     return [p[0] * .8 - .2, p[1] * .8 - .02, p[2] * .8];
