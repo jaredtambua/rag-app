@@ -55,3 +55,9 @@ MAX_SELECTED is now 20 (p2d: broad summaries were limited by the 10-chunk cap); 
 - Why: with the larger context the model once returned JSON with a stray backslash, rejected as an unexpected reply twice in a row.
 - Fix: the answer request now sets response_format json_object; parse_answer tries one repair (doubling backslashes that are not valid JSON escapes) before giving the friendly error.
 - Retest: repeat broad questions on a contract with paths, percentages or legal symbols; no "unexpected reply".
+
+### 12. Ambiguous questions without usable history (SYSTEM_PROMPT, "Unclear questions")
+- Why (p4): "What about the second one?", "Can you explain that in more detail?" and "And who has to give it?" got confident guesses with citations (0 of 3 declined).
+- Fix: a prompt rule says that when a question depends on something it does not state and History is missing or unclear, the model must not guess but ask in one short British English sentence what the user means, with no citations. Where History makes the reference clear it is resolved as before. The first-question user message is unchanged. A clarification reply with empty citations passes through the code untouched (not-found rule only removes citations; the quote check handles an empty list).
+- Confirmed: a history turn missing its "answer" field returns 422, like other wrong-shaped bodies (already covered in test_history.py); left as is.
+- Retest: the three ambiguous questions with no history (expect a clarification, no citations) and follow-ups with real history (still resolved).

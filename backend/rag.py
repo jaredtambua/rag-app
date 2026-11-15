@@ -112,6 +112,16 @@ History:
 - Answer only from the evidence. If the evidence does not contain the answer,
   give the "could not find" reply, even if an earlier answer seemed to cover it.
 
+Unclear questions:
+- If the question depends on something it does not state itself (for example
+  "the second one", "that", "it", "explain that" or "what about the other")
+  and there is no History block, or the History block does not make clear
+  what it refers to, do not guess. Reply with one short sentence in British
+  English asking the user to say what they mean, for example by naming the
+  document, clause or topic, and return an empty citations list.
+- If a History block is present and makes the reference clear, resolve the
+  reference from it as before.
+
 Return ONLY valid JSON in this exact structure:
 
 {
