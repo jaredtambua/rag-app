@@ -16,10 +16,10 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 /* The stagger transitions release triangles in index order, so the points of the shapes they join are put in an order
-   that makes the release read as a sweep: the network and the ring by angle around their centre, the grid left to right. */
+   that makes the release read as a sweep: the ring by angle around its centre, the grid left to right. */
 function sortPoints(arr, name) {
   const n = arr.length / 3, key = [];
-  if (name === "network" || name === "ring") for (let k = 0; k < n; k++) key.push(Math.atan2(arr[k * 3 + 1], arr[k * 3]));
+  if (name === "ring") for (let k = 0; k < n; k++) key.push(Math.atan2(arr[k * 3 + 1], arr[k * 3]));
   else if (name === "grid") for (let k = 0; k < n; k++) key.push(arr[k * 3] + arr[k * 3 + 1] * .001);
   else return arr;
   const order = key.map((_, k) => k).sort((p, q) => key[p] - key[q]), out = new Float32Array(arr.length);
@@ -87,7 +87,7 @@ export function startCloud(canvas, ambientCanvas) {
   }
   const brainSignals = createSignals(shapes[0]);
   const motionPoint = { x: 0, y: 0, z: 0, spin: 0 };
-  const frameInfo = { ca: [0, 0], cb: [0, 0], g: [0, 0] };
+  const frameInfo = { ca: [0, 0], g: [0, 0] };
   const rectSide = (r) => Math.min(r[2] * Math.min(W, H), r[3] * W, r[4] * H);
   let t0 = null, yawBase = 0, pitch = 0, vYaw = 0, vPitch = 0, lean = 0, leanT = 0, dragging = false, last = null;
 
@@ -105,9 +105,9 @@ export function startCloud(canvas, ambientCanvas) {
     /* where the two shapes sit and where the screen centre is, measured in the current frame (units of the current size) */
     const sa = rectSide(ra) / side, sb = rectSide(rb) / side;
     const oax = (ra[0] * W - cx) / side, oay = (ra[1] * H - cy) / side, obx = (rb[0] * W - cx) / side, oby = (rb[1] * H - cy) / side;
-    frameInfo.ca[0] = oax; frameInfo.ca[1] = oay; frameInfo.cb[0] = obx; frameInfo.cb[1] = oby;
+    frameInfo.ca[0] = oax; frameInfo.ca[1] = oay;
     frameInfo.g[0] = (W / 2 - cx) / side; frameInfo.g[1] = (H / 2 - cy) / side;
-    const anchored = i > 0;
+    const anchored = i > 1;
     const brainWeight = still ? 0 : clamp(1 - p * 4, 0, 1);
     const brainEvents = brainSignals.update(now, brainWeight > 0 && now - t0 > 2200);
     const lit = [];
