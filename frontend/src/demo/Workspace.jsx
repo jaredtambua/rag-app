@@ -67,6 +67,7 @@ export default function Workspace({ onNavigate }) {
   const sheetShown = compact && sheetOpen;
   const { error, setError, isUploading } = demo;
   const clearError = () => setError("");
+  const upload = { selectedFiles: demo.selectedFiles, chooseFiles: demo.chooseFiles, uploadDocument: demo.uploadDocument, isUploading };
 
   /* Escape dismisses the red banner (a drawer that is open keeps Escape for itself) */
   useEffect(() => {
@@ -127,7 +128,7 @@ export default function Workspace({ onNavigate }) {
             <div className="thread-inner">
               {hasTurn
                 ? <Thread items={demo.thread} isAsking={demo.isAsking} onRetry={retry} onAddPdf={pickFile} noDocuments={firstRun} />
-                : <EmptyState loading={loading} waking={demo.waking} failed={failed} onRetry={demo.retryConnect} firstRun={firstRun} count={count} onPick={pickFile} onExample={fillExample} />}
+                : <EmptyState loading={loading} waking={demo.waking} failed={failed} onRetry={demo.retryConnect} firstRun={firstRun} count={count} onPick={pickFile} onExample={fillExample} upload={upload} />}
             </div>
           </div>
           <div className="dock">

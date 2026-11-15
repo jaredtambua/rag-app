@@ -26,3 +26,8 @@ export function formatTimeLeft(seconds) {
   if (seconds < 60) return "Under a minute left";
   return `${Math.ceil(seconds / 60)} min left`;
 }
+
+export function formatSize(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}

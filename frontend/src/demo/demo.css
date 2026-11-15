@@ -88,10 +88,86 @@
 .empty-state { margin: auto; text-align: center; display: grid; justify-items: center; gap: var(--s3); padding: var(--s4) 0; max-width: 560px; }
 .empty-state h2 { font-size: clamp(30px, 3.6vw, 44px); text-wrap: balance; }
 .empty-state p { color: var(--mist); font-weight: 200; font-size: 18px; text-wrap: pretty; }
-.empty-state .demo-note { font-size: 14px; color: var(--ash); }
-.how { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s2); padding: 0; margin: 0; }
-.how li { display: inline-flex; align-items: center; gap: 10px; padding: 6px 16px 6px 6px; border: 1px solid var(--line); border-radius: var(--r-pill); color: var(--mist); font-size: var(--text-small); font-weight: 600; }
-.how li span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); font-size: 12px; }
+/* first run: the headline, one clear place to add a PDF, the three steps, a quiet demo note */
+.firstrun { width: 100%; max-width: var(--col-w); margin: auto; display: grid; gap: var(--s4); padding: 0; text-align: center; }
+.firstrun-head { display: grid; gap: var(--s2); justify-items: center; }
+.firstrun-head h2 { font-size: clamp(32px, 4.2vw, 52px); }
+.firstrun-head p { max-width: 640px; color: var(--mist); font-weight: 200; font-size: 18px; text-wrap: balance; }
+
+.drop { position: relative; overflow: hidden; border: 1.5px dashed var(--line-strong); border-radius: 28px; background: radial-gradient(420px 200px at 50% 0%, rgba(128, 82, 255, .16), transparent 75%), var(--surface); transition: border-color var(--t-fast), background var(--t-fast); }
+.drop:hover, .drop.is-dragging { border-color: var(--iris); }
+.drop.is-dragging { background: radial-gradient(520px 260px at 50% 40%, rgba(128, 82, 255, .3), transparent 75%), var(--surface); }
+.drop.is-ready { border-style: solid; border-color: var(--line-strong); }
+.drop:has(.drop-target:focus-visible) { outline: 2px solid var(--saffron); outline-offset: 4px; }
+.drop-target { position: relative; z-index: 1; display: grid; justify-items: center; gap: var(--s2); width: 100%; padding: var(--s5) var(--s4); border: 0; background: none; color: var(--white); font: inherit; cursor: pointer; }
+.drop-target:focus-visible { outline: none; }
+.drop-icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--iris-deep); color: var(--white); border: 1px solid var(--iris); }
+.drop-main { font-size: 24px; letter-spacing: -.02em; line-height: 1.2; }
+.drop-target .btn { margin-top: var(--s1); min-width: 200px; pointer-events: none; }
+.drop-target:hover .btn, .drop.is-dragging .btn { background: var(--iris-hover); }
+.drop-target:active .btn { transform: scale(.97); }
+.drop-hint { max-width: 420px; color: var(--ash); font-size: 13px; line-height: 1.5; text-wrap: balance; }
+
+.drop-ready { position: relative; z-index: 1; display: grid; gap: var(--s3); padding: var(--s4); }
+.drop-files { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s1); }
+.drop-files li { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--r-inner); background: var(--surface-2); min-width: 0; text-align: left; }
+.drop-files svg { flex: none; color: var(--saffron); }
+.drop-files .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drop-actions { display: flex; align-items: center; justify-content: center; gap: var(--s2); flex-wrap: wrap; }
+.drop-actions .btn-primary { min-width: 200px; }
+.drop-ready .progress { text-align: left; }
+
+/* drifting triangle outlines; transform only, and still when the visitor asks for less motion */
+.drift { position: absolute; inset: 0; pointer-events: none; }
+.drift svg { position: absolute; opacity: .5; transition: opacity 300ms var(--ease-out), scale 300ms var(--ease-out); animation: drift 9s ease-in-out infinite; }
+.drop.is-dragging .drift svg { opacity: 1; scale: 1.12; }
+.drift-a { --r: -12deg; left: 7%; top: 16%; width: 54px; }
+.drift-b { --r: 10deg; left: 17%; bottom: 14%; width: 34px; animation-delay: -3s; }
+.drift-c { --r: 8deg; right: 8%; top: 13%; width: 62px; animation-delay: -5s; }
+.drift-d { --r: -20deg; right: 19%; bottom: 15%; width: 30px; animation-delay: -1.5s; }
+.drift-e { --r: 160deg; left: 3%; top: 56%; width: 40px; animation-delay: -6s; }
+.drift-f { --r: 185deg; right: 4%; top: 58%; width: 28px; animation-delay: -4s; }
+@keyframes drift { 0%, 100% { transform: translateY(0) rotate(var(--r)); } 50% { transform: translateY(-9px) rotate(calc(var(--r) + 6deg)); } }
+
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s3); }
+.steps li { position: relative; display: grid; justify-items: center; align-content: start; gap: var(--s2); }
+.steps li:not(:last-child)::before { content: ""; position: absolute; top: 17px; left: calc(50% + 28px); width: calc(100% + var(--s3) - 56px); height: 1px; background: linear-gradient(90deg, var(--iris), var(--line-strong)); }
+.step-no { position: relative; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--void); color: var(--mist); font-weight: 600; font-size: 15px; }
+.steps li:first-child .step-no { background: var(--iris); border-color: var(--iris); color: var(--white); }
+.step-body { display: grid; gap: 4px; max-width: 200px; }
+.step-body strong { font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+.step-body span { color: var(--ash); font-size: 14px; line-height: 1.45; }
+.firstrun .demo-note { justify-self: center; max-width: 440px; padding-top: var(--s1); color: var(--ash); font-size: 13px; line-height: 1.5; text-wrap: balance; }
+
+@media (max-height: 820px) and (min-width: 641px) {
+  .firstrun { gap: var(--s3); }
+  .firstrun-head h2 { font-size: clamp(30px, 3.6vw, 44px); }
+  .drop-target { padding: var(--s4); gap: var(--s1); }
+  .drop-icon { width: 44px; height: 44px; }
+  .drop-main { font-size: 21px; }
+}
+
+@media (max-height: 790px) and (min-width: 641px) {
+  .drop-icon { display: none; }
+}
+
+@media (max-width: 640px) {
+  .firstrun { gap: var(--s3); text-align: center; }
+  .firstrun-head h2 { font-size: 30px; }
+  .drop-icon { display: none; }
+  .drop-main { font-size: 20px; }
+  .firstrun-head p { font-size: 17px; }
+  .drop-target { padding: var(--s4) var(--s3); }
+  .drift-a { left: 4%; top: 10%; width: 36px; }
+  .drift-c { right: 5%; top: 8%; width: 40px; }
+  .drift-b, .drift-d, .drift-e, .drift-f { display: none; }
+  .steps { grid-template-columns: minmax(0, 1fr); gap: var(--s2); justify-items: start; text-align: left; }
+  .steps li { grid-template-columns: 36px minmax(0, 1fr); align-items: start; justify-items: start; gap: var(--s2); }
+  .steps li:not(:last-child)::before { top: 36px; left: 17px; width: 1px; height: calc(100% + var(--s2) - 36px); background: linear-gradient(var(--iris), var(--line-strong)); }
+  .step-body { max-width: none; padding-top: 2px; }
+  .firstrun .demo-note { padding-top: 0; }
+}
+
 .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .chip { min-height: 44px; padding: 6px 16px; border: 1px solid var(--line-strong); border-radius: var(--r-pill); background: none; color: var(--mist); font-size: 14px; cursor: pointer; transition: border-color var(--t-fast), color var(--t-fast); }
 .chip:hover { border-color: var(--iris); color: var(--white); }
@@ -214,8 +290,6 @@
   .docs-btn .label { display: none; }
   .docs-btn { padding: 8px 12px; }
   .empty-state p { font-size: 17px; }
-  .how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: 100%; }
-  .how li { flex-direction: column; gap: 6px; padding: 10px 4px; border-radius: 16px; text-align: center; font-size: 12px; }
   .asked { max-width: 92%; }
   .reply { padding: var(--s3); }
 }

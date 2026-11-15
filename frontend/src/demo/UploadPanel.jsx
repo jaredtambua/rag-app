@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { CloseIcon, FileIcon, UploadIcon } from "./icons.jsx";
-import { LIMITS } from "./limits.js";
-
-function formatSize(bytes) {
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+import { LIMITS, formatSize } from "./limits.js";
 
 /* Compact on purpose: the list below it is what needs the room. The Upload button only appears once
    files are picked, so the dropzone is the single action until then. */

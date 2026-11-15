@@ -1,9 +1,9 @@
-import { UploadIcon } from "./icons.jsx";
+import FirstRun from "./FirstRun.jsx";
 
 const EXAMPLES = ["Summarise this document", "What are the key points?", "What does it say about risks?"];
 
 /* What the conversation pane shows before the first question: first run guides to an upload, later it offers a start. */
-export default function EmptyState({ loading, waking, failed, onRetry, firstRun, count, onPick, onExample }) {
+export default function EmptyState({ loading, waking, failed, onRetry, firstRun, count, onPick, onExample, upload }) {
   if (loading) {
     return (
       <div className="empty-state">
@@ -25,21 +25,7 @@ export default function EmptyState({ loading, waking, failed, onRetry, firstRun,
     );
   }
 
-  if (firstRun) {
-    return (
-      <div className="empty-state">
-        <h2>Start with a document you know.</h2>
-        <p>Add a PDF you know well, such as a report, an article or a contract, then test Tessel with questions you can check yourself. Answers cite the pages they used.</p>
-        <ol className="how">
-          <li><span>1</span>Add a PDF</li>
-          <li><span>2</span>Ask a question</li>
-          <li><span>3</span>Check the sources</li>
-        </ol>
-        <button className="btn btn-primary" type="button" onClick={onPick}><UploadIcon size={16} /> Add a PDF</button>
-        <p className="demo-note">This is a demo. Tessel as a product would keep your knowledge base, built from your own documents.</p>
-      </div>
-    );
-  }
+  if (firstRun) return <FirstRun {...upload} onPick={onPick} />;
 
   return (
     <div className="empty-state">
