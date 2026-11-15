@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import unicodedata
 
 import config
 import clients
@@ -246,76 +247,138 @@ def says_information_is_absent(answer: str) -> bool:
     return False
 
 
-def _normalise(text: str) -> str:
-    return " ".join(text.split())
-
-
-_ELLIPSIS = re.compile(r"\.{3,}|…")
+_ELLIPSIS = re.compile(r"\.{3,}|\u2026")
 _MIN_PIECE_CHARS = 8
 
+_CHARACTER_MAP = str.maketrans(
+    {
+        "\u2018": "'", "\u2019": "'", "\u201a": "'", "\u201b": "'", "\u2032": "'",
+        "\u201c": '"', "\u201d": '"', "\u201e": '"', "\u2033": '"',
+        "\u2010": "-", "\u2011": "-", "\u2012": "-", "\u2013": "-",
+        "\u2014": "-", "\u2015": "-", "\u2212": "-",
+    }
+)
+_LINE_END_HYPHEN = re.compile(r"(\w)-[ \t]*\n[ \t]*(?=\w)")
 
-def _evidence_by_source_and_page(context_blocks):
-    """(source, page) -> normalised chunk texts, in the raw and escaped form
-    (the model saw the escaped form and may copy from it)."""
-    evidence = {}
+
+def _normalise(text: str) -> str:
+    """Form used only to compare a quote with the evidence: ligatures
+    unfolded, soft hyphens and line-end hyphenation removed, curly quotes and
+    dashes made plain, whitespace collapsed and case ignored."""
+    text = unicodedata.normalize("NFKC", text).replace("\u00ad", "")
+    text = _LINE_END_HYPHEN.sub(r"\1", text)
+    text = text.translate(_CHARACTER_MAP)
+    return " ".join(text.split()).lower()
+
+
+_OVERLAP_CHARS = 400
+_MIN_OVERLAP_CHARS = 20
+
+
+def _join_block(block, escape: bool):
+    """One normalised text for a block (consecutive chunks of one document),
+    with the repeated overlap between neighbouring chunks removed, plus the
+    (start, end, page) span each chunk covers in it."""
+    joined = ""
+    spans = []
+
+    for chunk in block.chunks:
+        text = _normalise(_escape(chunk.text) if escape else chunk.text)
+
+        overlap = 0
+        for size in range(min(len(joined), len(text), _OVERLAP_CHARS), _MIN_OVERLAP_CHARS - 1, -1):
+            if joined.endswith(text[:size]):
+                overlap = size
+                break
+
+        start = len(joined) - overlap if overlap else len(joined) + (1 if joined else 0)
+        joined = joined + text[overlap:] if overlap else (joined + " " + text if joined else text)
+        spans.append((start, len(joined), chunk.page))
+
+    return joined, spans
+
+
+def _evidence_texts(context_blocks):
+    """For each block: its source and its joined texts (as the document has
+    them, and escaped the way the model saw them) with chunk spans."""
+    evidence = []
     for block in context_blocks:
-        for chunk in block.chunks:
-            texts = evidence.setdefault((block.source, chunk.page), [])
-            texts.append(_normalise(chunk.text))
-            texts.append(_normalise(_escape(chunk.text)))
+        evidence.append(
+            (block.source, [_join_block(block, escape=False), _join_block(block, escape=True)])
+        )
     return evidence
 
 
-def _verified_quote(quote: str, texts) -> str | None:
-    """The quote if it appears verbatim (whitespace aside) in one of texts.
+def _find(piece: str, source, page, evidence):
+    """(page) where the normalised piece appears in this source, preferring
+    the cited page, or None. The text may span adjacent chunks and pages."""
+    corrected = None
+    for block_source, texts in evidence:
+        if block_source != source:
+            continue
+        for joined, spans in texts:
+            at = joined.find(piece)
+            if at < 0:
+                continue
+            end = at + len(piece)
+            covered = [p for (a, b, p) in spans if a < end and b > at]
+            if page in covered:
+                return page
+            if corrected is None and covered:
+                corrected = covered[0]
+    return corrected
 
-    A quote shortened with "..." is split on the ellipsis; only the pieces
-    that appear verbatim are kept and they are joined with " ... ".
+
+def _verified_quote(quote: str, source, page, evidence):
+    """(quote, page) if the quote appears in the evidence, else None.
+
+    The shown quote keeps the model's own wording (whitespace tidied). A quote
+    shortened with "..." is split on the ellipsis; only the pieces found in the
+    evidence are kept, joined with " ... ".
     """
-    quote = _normalise(quote)
+    quote = " ".join(quote.split())
     if not quote:
         return None
 
     if not _ELLIPSIS.search(quote):
-        return quote if any(quote in text for text in texts) else None
+        found = _find(_normalise(quote), source, page, evidence)
+        return None if found is None else (quote, found)
 
-    pieces = [_normalise(p) for p in _ELLIPSIS.split(quote)]
-    kept = [
-        p for p in pieces
-        if len(p) >= _MIN_PIECE_CHARS and any(p in text for text in texts)
-    ]
-    return " ... ".join(kept) if kept else None
+    kept, found_page = [], None
+    for piece in _ELLIPSIS.split(quote):
+        piece = " ".join(piece.split())
+        if len(piece) < _MIN_PIECE_CHARS:
+            continue
+        found = _find(_normalise(piece), source, page, evidence)
+        if found is not None:
+            kept.append(piece)
+            found_page = found if found_page is None else found_page
+    return (" ... ".join(kept), found_page) if kept else None
 
 
 def check_citations(citations, context_blocks):
     """
     Keep only citations whose quote really is in the evidence that was sent.
 
-    The quote must appear in the cited source on the cited page. If it only
-    appears on another page of that same source, the page is corrected to the
-    page where it was found. Citations with no matching text are dropped; the
-    answer itself is never changed.
+    The quote is compared with the evidence for its source after smoothing out
+    differences that come from PDF text (see _normalise). It may span adjacent
+    chunks, and pages when the chunks overlap. If the text is found but not on
+    the cited page, the page is corrected to where it was found. Citations
+    with no matching text are dropped; the answer itself is never changed.
     """
-    evidence = _evidence_by_source_and_page(context_blocks)
+    evidence = _evidence_texts(context_blocks)
     checked = []
 
     for citation in citations:
         if not isinstance(citation, dict) or not isinstance(citation.get("quote"), str):
             continue
 
-        source = citation.get("source")
-        page = citation.get("page")
-
-        pages = [page] + [p for (s, p) in evidence if s == source and p != page]
-
-        for candidate_page in pages:
-            texts = evidence.get((source, candidate_page))
-            if not texts:
-                continue
-            quote = _verified_quote(citation["quote"], texts)
-            if quote is not None:
-                checked.append({**citation, "page": candidate_page, "quote": quote})
-                break
+        verified = _verified_quote(
+            citation["quote"], citation.get("source"), citation.get("page"), evidence
+        )
+        if verified is not None:
+            quote, page = verified
+            checked.append({**citation, "page": page, "quote": quote})
 
     return checked
 

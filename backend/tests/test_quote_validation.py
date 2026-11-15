@@ -97,3 +97,74 @@ def test_end_to_end_invented_quote_is_dropped_but_answer_kept(client, stubbed):
     body = ask(client, uploaded_visitor(client)).json()
     assert body["answer"] == "It is a striped animal."
     assert body["citations"] == [{"source": "z.pdf", "page": 1, "quote": real}]
+
+
+# ---- quotes that differ only because of how PDF text is extracted ----
+
+OVERLAP = "which is confidential and shall not be disclosed to any third party"
+
+
+def two_chunk_blocks(first, second, pages=(1, 1)):
+    return [
+        ContextBlock(
+            source="c.pdf",
+            distance=0.5,
+            chunks=[
+                RetrievedChunk(page=pages[0], chunk_index=4, text=first),
+                RetrievedChunk(page=pages[1], chunk_index=5, text=second),
+            ],
+        )
+    ]
+
+
+def test_quote_spanning_two_adjacent_chunks_is_kept_even_with_overlap():
+    blocks = two_chunk_blocks(
+        "Confidential Information means all data, " + OVERLAP,
+        OVERLAP + " without prior written approval from the owner.",
+    )
+    quote = "Confidential Information means all data, " + OVERLAP + " without prior written approval"
+    assert rag.check_citations([cite(quote, source="c.pdf")], blocks) == [cite(quote, source="c.pdf")]
+
+
+def test_quote_spanning_two_chunks_without_overlap_is_kept():
+    blocks = two_chunk_blocks("The first part ends here.", "The second part starts here.")
+    quote = "The first part ends here. The second part starts here."
+    assert rag.check_citations([cite(quote, source="c.pdf")], blocks)
+
+
+def test_quote_across_a_page_boundary_keeps_the_cited_page_when_it_covers_part():
+    blocks = two_chunk_blocks("Payment is due on the first day", "of every month in advance.", pages=(3, 4))
+    got = rag.check_citations([cite("due on the first day of every month", page=4, source="c.pdf")], blocks)
+    assert got[0]["page"] == 4
+    got = rag.check_citations([cite("due on the first day of every month", page=9, source="c.pdf")], blocks)
+    assert got[0]["page"] == 3  # corrected to where the quote starts
+
+
+def test_curly_quotes_dashes_and_case_do_not_matter():
+    blocks = [
+        ContextBlock(
+            source="c.pdf", distance=0,
+            chunks=[RetrievedChunk(page=1, chunk_index=0, text="The \u201cCompany\u2019s\u201d term \u2013 five years \u2014 ends in MARCH.")],
+        )
+    ]
+    quote = "The \"Company's\" term - five years - ends in March."
+    assert rag.check_citations([cite(quote, source="c.pdf")], blocks) == [cite(quote, source="c.pdf")]
+    # and the other way round: the model wrote curly, the document is straight
+    blocks[0].chunks[0].text = "The \"Company's\" term - five years"
+    assert rag.check_citations([cite("The \u201cCompany\u2019s\u201d term \u2013 five years", source="c.pdf")], blocks)
+
+
+def test_soft_hyphen_line_end_hyphenation_and_ligatures_are_smoothed_out():
+    blocks = [
+        ContextBlock(
+            source="c.pdf", distance=0,
+            chunks=[RetrievedChunk(page=1, chunk_index=0, text="The super\u00advisor must co-\noperate with the o\ufb03cer.")],
+        )
+    ]
+    assert rag.check_citations([cite("The supervisor must cooperate with the officer.", source="c.pdf")], blocks)
+
+
+def test_invented_quote_is_still_dropped_after_smoothing():
+    blocks = two_chunk_blocks("The first part ends here.", "The second part starts here.")
+    assert rag.check_citations([cite("The first part ends here. A third part appears.", source="c.pdf")], blocks) == []
+    assert rag.check_citations([cite("Confidential Information includes everything", source="c.pdf")], blocks) == []
