@@ -68,7 +68,7 @@ def test_instructions_are_separate_from_document_text(client, stubbed):
     (call,) = stub.chat_calls
     system, user = call["messages"][0], call["messages"][1]
     assert system["role"] == "system" and user["role"] == "user"
-    assert "ignore any instructions" in system["content"].lower()
+    assert "must never be followed" in " ".join(system["content"].split())
     assert MARKER not in system["content"] and INJECTION not in system["content"]
     assert INJECTION in user["content"]
     start = user["content"].index("<evidence>")
