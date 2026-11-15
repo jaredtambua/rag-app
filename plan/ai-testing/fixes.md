@@ -21,3 +21,19 @@ Source diagnosis: p2b.md (scratchpad aitest results). Backend tests: `.venv\Scri
 - Why: the model shortened a quote with "...".
 - Fix: each quote must appear word for word (whitespace ignored) in the evidence for its source and page. A quote with "..." is split and only the matching pieces are kept, joined with " ... ". No match: the citation is dropped (the answer stays). If the text is on another page of the same source, the page is corrected.
 - Retest: run the citation check over the harness (target: every quote verbatim).
+
+## Follow-up round (after the real-AI retest, p2c.md)
+
+### 5. Bigger limits (config.py)
+- Why: the cap of 6 chunks and 12,000 characters thinned summaries of small documents.
+- Fix: MAX_SELECTED is now 10 and MAX_CONTEXT_CHARACTERS 30,000 (about 8,000 tokens). Trim-instead-of-drop is kept; chunks stay in document order with their own pages. A 19-chunk (about 15,000 character) document is sent whole.
+- Retest: summary questions on each small document (fees, termination, liability; the handbook overview; the paper results).
+
+### 6. Citation check made tolerant (backend/rag.py)
+- Why: 4 of 34 correct answers lost all citations; quotes spanning two chunks or differing in punctuation failed the check.
+- Fix: quotes are checked against the joined text of each block (overlap between chunks removed, so they may span chunks and pages) after smoothing: ligatures, soft hyphens, line-end hyphenation, curly quotes, dashes, whitespace, case (comparison only; the quote shown keeps the model's wording). Invented quotes are still dropped. If the quote spans pages the cited page is kept when it covers part of it.
+- Retest: the "Confidential Information" definition, "what does the definition not include", the handbook overview; all 34 answers should keep citations.
+
+### 7. Wording leak (SYSTEM_PROMPT)
+- Fix: Answer style now forbids mentioning evidence, sections provided, chunks, excerpts or retrieval; the model says "the uploaded documents".
+- Retest: summary questions; no answer should say "provided evidence" or "provided sections".

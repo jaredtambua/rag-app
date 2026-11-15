@@ -85,6 +85,8 @@ Answer style:
 - Use paragraphs, bullet points, or headings when they genuinely improve
   clarity.
 - Do not add unnecessary detail simply to make an answer longer.
+- Never mention "evidence", "sections provided", "chunks", "excerpts" or
+  retrieval in your answer. Speak of "the uploaded documents" instead.
 
 Grounding:
 - Base factual claims only on the provided evidence.

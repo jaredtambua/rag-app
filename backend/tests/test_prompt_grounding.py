@@ -9,3 +9,8 @@ def test_prompt_forbids_general_knowledge_answers():
     assert "arithmetic" in prompt
     assert 'give the "could not find" reply' in prompt
 
+
+def test_prompt_tells_the_model_not_to_mention_evidence_or_retrieval():
+    prompt = " ".join(rag.SYSTEM_PROMPT.split())
+    assert 'Never mention "evidence", "sections provided", "chunks"' in prompt
+    assert 'Speak of "the uploaded documents" instead' in prompt
