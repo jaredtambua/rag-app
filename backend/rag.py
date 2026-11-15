@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 import config
 import clients
@@ -173,6 +174,85 @@ def parse_answer(content: str) -> dict:
     return parsed
 
 
+# --- Checks on the model's citations --------------------------------------
+#
+# An answer that says the documents lack the information loses its citations.
+
+# Phrases that on their own say "the documents do not have this".
+_ABSENCE_PHRASES = (
+    "could not find", "couldn't find", "cannot find", "can't find",
+    "not mentioned", "no mention", "no information", "no reference to",
+    "not specified", "not stated", "no evidence of",
+)
+
+# Phrases that are only about absence when the sentence is about the documents
+# ("the agreement does not include a non-compete clause").
+_DOCUMENT_ABSENCE_PHRASES = (
+    "does not mention", "do not mention", "does not contain", "do not contain",
+    "does not include", "do not include", "does not address", "do not address",
+    "doesn't mention", "doesn't contain", "doesn't include", "doesn't address",
+)
+_DOCUMENT_WORDS = (
+    "document", "uploaded", "evidence", "provided", "text", "agreement",
+    "contract", "paper", "file", "pdf", "excerpt", "material", "report",
+    "policy", "clause",
+)
+
+# Words that suggest the answer is a real statement about what the documents
+# say or require ("does not allow assignment without consent"), not an absence.
+_RULE_WORDS = (
+    "allow", "permit", "prohibit", "forbid", "without", "unless", "except",
+    "only if", "consent", "require", "must", "may not", "cannot be",
+)
+
+_MAX_ABSENCE_ANSWER_CHARS = 400
+
+
+def says_information_is_absent(answer: str) -> bool:
+    """
+    True only when the answer is clearly a short "this is not in the documents"
+    reply. Conservative: when in doubt it returns False so citations are kept.
+
+    - The exact "could not find" reply is always absence.
+    - Otherwise the answer must be under 400 characters, be plain prose (no
+      list lines, no digits that could be real figures), contain no
+      rule-style words, and contain an absence phrase. The softer phrases
+      ("does not include") also need a document word in the same sentence.
+    """
+    text = " ".join(answer.split())
+    lowered = text.lower()
+
+    if text == NO_ANSWER:
+        return True
+
+    if len(text) >= _MAX_ABSENCE_ANSWER_CHARS or not text:
+        return False
+    if re.search(r"(^|\n)\s*([-*•]|\d+[.)])\s", answer):
+        return False
+    if re.search(r"\d", text):
+        return False
+    if any(word in lowered for word in _RULE_WORDS):
+        return False
+
+    if any(phrase in lowered for phrase in _ABSENCE_PHRASES):
+        return True
+
+    for sentence in re.split(r"(?<=[.!?])\s+", lowered):
+        if any(p in sentence for p in _DOCUMENT_ABSENCE_PHRASES) and any(
+            w in sentence for w in _DOCUMENT_WORDS
+        ):
+            return True
+
+    return False
+
+
+def clean_citations(parsed: dict, context_blocks) -> dict:
+    """Apply the citation checks to a parsed model reply."""
+    if says_information_is_absent(parsed["answer"]):
+        parsed["citations"] = []
+    return parsed
+
+
 def build_user_message(context, question, history, standalone) -> str:
     message = f"<evidence>\n{context}\n</evidence>\n\n"
     if history:
@@ -222,4 +302,4 @@ def generate_answer(
         logger.error("Answer request failed (%s)", type(error).__name__)
         raise AnswerError(MSG_UNAVAILABLE)
 
-    return parse_answer(content)
+    return clean_citations(parse_answer(content), context_blocks)
