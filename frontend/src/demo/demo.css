@@ -183,8 +183,8 @@
 /* a compact pill, centred in the bar at any height; the tap area is still 44px tall */
 .composer .btn { position: relative; flex: none; align-self: center; min-width: var(--ask-w); min-height: 34px; padding: 6px 16px; white-space: nowrap; font-size: 13px; gap: 8px; }
 .composer .btn::before { content: ""; position: absolute; inset: -5px 0; }
-.composer-wrap .hint { margin-top: var(--s2); padding: 0 27px; text-align: left; font-size: 13px; display: flex; justify-content: space-between; gap: var(--s2); }
-.composer-wrap .hint .counter { flex: none; font-variant-numeric: tabular-nums; }
+.composer-wrap .hint { margin-top: var(--s2); padding: 0 27px; text-align: center; font-size: 13px; text-wrap: balance; }
+.composer-wrap .hint .counter { display: inline-block; margin-left: var(--s2); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .composer-wrap .hint .counter.is-over, .composer-wrap .hint.is-alert .counter.is-over { color: var(--error); font-weight: 600; }
 
 /* the thread: question and answer pairs, oldest first */
