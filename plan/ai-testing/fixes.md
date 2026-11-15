@@ -50,3 +50,8 @@ MAX_SELECTED is now 20 (p2d: broad summaries were limited by the 10-chunk cap); 
 - Why (p3c): the collection uses Chroma's default squared-L2 metric (range 0 to 4 for unit vectors). Useful chunks score 0.9 to 1.6, so a cut-off of 1.0 dropped nearly everything and the best 3 were used for every question; the caps never mattered.
 - Fix: MAX_DISTANCE is 4.0 (cannot filter anything) and MAX_SELECTED is 30; the 30,000 character trim still protects. No documents still means no model call; visitor and expiry scoping unchanged.
 - Consequence: unrelated questions now always reach the model, so "not found" relies on the prompt (p2c/p2d showed it works), and cost per question rises (up to about 8,000 tokens of context).
+
+### 11. JSON robustness (backend/rag.py)
+- Why: with the larger context the model once returned JSON with a stray backslash, rejected as an unexpected reply twice in a row.
+- Fix: the answer request now sets response_format json_object; parse_answer tries one repair (doubling backslashes that are not valid JSON escapes) before giving the friendly error.
+- Retest: repeat broad questions on a contract with paths, percentages or legal symbols; no "unexpected reply".

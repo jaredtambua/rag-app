@@ -148,6 +148,15 @@ return:
 """
 
 
+_BACKSLASH = re.compile(r"\\(?:([\"\\/bfnrt]|u[0-9a-fA-F]{4}))?")
+
+
+def _escape_stray_backslashes(content: str) -> str:
+    """Double every backslash that does not start a valid JSON escape
+    (valid escapes, including a doubled backslash, are left alone)."""
+    return _BACKSLASH.sub(lambda m: m.group(0) if m.group(1) else "\\\\", content)
+
+
 def parse_answer(content: str) -> dict:
     """Parse and check the model's JSON reply, or raise AnswerError."""
     content = content.strip()
@@ -162,9 +171,13 @@ def parse_answer(content: str) -> dict:
     try:
         parsed = json.loads(content)
     except json.JSONDecodeError:
-        # The raw reply holds document text, so it is never logged.
-        logger.error("Model reply was not valid JSON")
-        raise AnswerError(MSG_BAD_REPLY)
+        # One repair attempt: a stray backslash is the usual culprit.
+        try:
+            parsed = json.loads(_escape_stray_backslashes(content))
+        except json.JSONDecodeError:
+            # The raw reply holds document text, so it is never logged.
+            logger.error("Model reply was not valid JSON")
+            raise AnswerError(MSG_BAD_REPLY)
 
     if (
         not isinstance(parsed, dict)
@@ -439,6 +452,7 @@ def generate_answer(
                 {"role": "user", "content": user_message},
             ],
             temperature=0,
+            response_format={"type": "json_object"},
         )
         content = response.choices[0].message.content or ""
     except Exception as error:
