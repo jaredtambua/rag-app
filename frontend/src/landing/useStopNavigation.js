@@ -1,4 +1,4 @@
-/* Moves between the landing page's stops: prev/next buttons, the dots, nav links and the arrow keys.
+/* Moves between the landing page's stops: prev/next buttons, nav links and the arrow keys.
    Scrolling is animated by hand so it can be cancelled the moment the visitor scrolls themselves. */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { STOP_COUNT, clamp, stopUnit } from "./stops.js";

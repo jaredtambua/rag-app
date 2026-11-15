@@ -56,35 +56,24 @@
       y = .26 - k * .09 + rnd(-.02, .02); x = rnd(0, len);
       if (Math.random() < .25) { x = len; y = .26 - k * .09 + rnd(-.04, .04); }
     }
-    var tilt = .42, c = Math.cos(tilt), sn = Math.sin(tilt);
-    return [.34 + x * c - y * sn, .02 + x * sn + y * c, z];
+    var tilt = .42, c = Math.cos(tilt), sn = Math.sin(tilt), size = .7;   /* the key is drawn at 70% of its first size */
+    return [.31 + (x * c - y * sn) * size, .02 + (x * sn + y * c) * size, z * size];
   }
 
   /* ---- a padlock with a key beside it: the privacy scene ---- */
   function lockAndKey() {
-    if (Math.random() < .36) return key();
+    if (Math.random() < .27) return key();
     var p = padlock();
     if (!p) return null;
     return [p[0] * .8 - .2, p[1] * .8 - .02, p[2] * .8];
   }
 
-  /* ---- a stack of loose pages ---- */
-  function stack() {
-    var k = (Math.random() * 6) | 0, ang = k * .14, hx = .27, hz = .19, y = (k - 2.5) * .12, x, z;
-    if (Math.random() < .75) {
-      var per = 2 * (2 * hx + 2 * hz), t = Math.random() * per;
-      if (t < 2 * hx) { x = -hx + t; z = -hz; } else if (t < 2 * hx + 2 * hz) { x = hx; z = -hz + (t - 2 * hx); } else if (t < 4 * hx + 2 * hz) { x = hx - (t - 2 * hx - 2 * hz); z = hz; } else { x = -hx; z = hz - (t - 4 * hx - 2 * hz); }
-    } else { x = rnd(-hx, hx); z = rnd(-hz, hz); }
-    var X = x * Math.cos(ang) + z * Math.sin(ang), Z = -x * Math.sin(ang) + z * Math.cos(ang), tl = .85;
-    return [X, y * Math.cos(tl) - Z * Math.sin(tl), y * Math.sin(tl) + Z * Math.cos(tl)];
-  }
   function ring() { var a = Math.random() * 6.283, r = .36 + rnd(-.04, .04); return [r * Math.cos(a), r * Math.sin(a), rnd(-.06, .06)]; }
   function grid() {
     var cw = .17, gap = .06, i = (Math.random() * 4) | 0, j = (Math.random() * 3) | 0, cx = (i - 1.5) * (cw + gap), cy = (j - 1) * (cw + gap), side = (Math.random() * 4) | 0, t = rnd(-cw / 2, cw / 2), h = cw / 2;
     var p = side === 0 ? [t, -h] : side === 1 ? [h, t] : side === 2 ? [t, h] : [-h, t];
     return [cx + p[0], cy + p[1], rnd(-.02, .02)];
   }
-  function spiral() { var t = Math.pow(Math.random(), .7), r = .04 + .44 * t, a = t * 13 + (Math.random() < .5 ? 0 : Math.PI); return [r * Math.cos(a), r * Math.sin(a) * .9, rnd(-.04, .04) * (1 - t) + rnd(-.01, .01)]; }
   var NET = (function () {
     var s = 7, nodes = [], edges = [], i, v;
     function r() { s = (s * 16807) % 2147483647; return s / 2147483647; }
@@ -101,14 +90,9 @@
     return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
   }
   function scatter() { return [rnd(-1.1, 1.1), rnd(-.9, .9), rnd(-.8, .8)]; }
-  function sphere() {
-    var y = rnd(-1, 1), angle = rnd(0, Math.PI * 2), radius = Math.sqrt(1 - y * y) * .38;
-    return [radius * Math.cos(angle), y * .38, radius * Math.sin(angle)];
-  }
-
   var GEN = {
     "brain": function () { return brain(1); }, "brain-s": function () { return brain(.78); },
-    "padlock": lockAndKey, "stack": stack, "ring": ring, "grid": grid, "spiral": spiral, "network": network, "scatter": scatter, "sphere": sphere
+    "padlock": lockAndKey, "ring": ring, "grid": grid, "network": network, "scatter": scatter
   };
 export const TesselShapes = {
     sample: function (name, count) {

@@ -7,6 +7,9 @@ export const LIMITS = {
   minutes: 30,
   questionChars: 500,
   questionsPerHour: 20,
+  sentHistoryTurns: 5, /* earlier answered turns sent with each question, so follow-ups work */
+  historyAnswerChars: 600, /* each earlier answer is cut to this many characters before it is sent */
+  historyTurns: 20, /* questions kept on screen; the oldest drop off first */
 };
 
 export const MAX_FILE_BYTES = LIMITS.fileMb * 1024 * 1024;
@@ -22,4 +25,9 @@ export const MESSAGES = {
 export function formatTimeLeft(seconds) {
   if (seconds < 60) return "Under a minute left";
   return `${Math.ceil(seconds / 60)} min left`;
+}
+
+export function formatSize(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

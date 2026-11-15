@@ -8,35 +8,19 @@ import { warmUpServer } from "../demo/useRagDemo.js";
 import { useStopNavigation } from "./useStopNavigation.js";
 import "./landing.css";
 
+/* the stops each link covers: how it works = knowledge base and citations, use cases = the quotes scene, privacy = the last scene */
 const NAV_LINKS = [
   { label: "How it works", stop: 1, stops: "1-2" },
-  { label: "Use cases", stop: 3, stops: "3-5" },
-  { label: "Privacy", stop: 6, stops: "6-6" },
+  { label: "Use cases", stop: 3, stops: "3-3" },
+  { label: "Privacy", stop: 4, stops: "4-4" },
 ];
 
 const USE_CASES = [
-  { who: "Lawyers", title: "Find the clause across your contracts.", text: "And see exactly where it came from." },
-  { who: "Researchers", title: "Ask a pile of papers one question.", text: "Get the answer with the passage attached." },
-  { who: "Small teams", title: "Make your team’s documents answer back.", text: "Turn the folder nobody can search into something that can." },
+  { who: "Lawyers", text: "Search every contract and see the page it came from." },
+  { who: "Scientists", text: "Ask across your papers and get the passage, with its page." },
+  { who: "Consultants", text: "Find the exact line in a client report, with its page." },
+  { who: "New hires", text: "Ask what a company term means and get the page that explains it." },
 ];
-const FIRST_USE_STOP = 3;
-
-function Dots({ active, onSelect }) {
-  return (
-    <div className="dots">
-      {USE_CASES.map((_, i) => (
-        <button
-          key={i}
-          className="dot"
-          type="button"
-          aria-label={`Show slide ${i + 1} of ${USE_CASES.length}`}
-          aria-current={i === active ? "true" : undefined}
-          onClick={() => onSelect(FIRST_USE_STOP + i)}
-        />
-      ))}
-    </div>
-  );
-}
 
 export default function Landing({ onNavigate }) {
   const cloudRef = useRef(null);
@@ -84,53 +68,45 @@ export default function Landing({ onNavigate }) {
         </div>
 
         <div className="scene-text t1" data-stop="1">
-          <h2 className="head">Create your personal knowledge base.</h2>
-          <p className="small lede">Add the files you already have, then ask in plain words. This is a demo: Tessel as a product would keep your knowledge base, built from your own documents.</p>
+          <div className="copy">
+            <h2 className="h-md">One knowledge base for you or your team.</h2>
+            <p className="lede">Add any documents, related or not. Tessel finds the answer.</p>
+            <p className="note">The demo is a private, temporary preview.</p>
+          </div>
         </div>
 
         <div className="scene-text t2" data-stop="2">
-          <h2 className="head h-md">Answers cite the pages they used.</h2>
-          <div className="passage">
-            <p className="tag">Example</p>
-            <p className="where">Page 14, clause 7.2</p>
-            <p className="quote">Either party may end this agreement with sixty days&rsquo; written notice.</p>
+          <div className="copy">
+            <h2 className="h-md">Answers cite the pages they used.</h2>
+            <p className="lede">Every answer shows the file and page it came from.</p>
           </div>
         </div>
 
-        {USE_CASES.map((c, i) => (
-          <div className="scene-text t3" data-stop={FIRST_USE_STOP + i} key={c.who}>
-            <div className="copy">
-              <p className="eyebrow">{c.who}</p>
-              <h2 className="h-md">{c.title}</h2>
-              <p className="lede">{c.text}</p>
-              <Dots active={i} onSelect={goTo} />
-            </div>
-          </div>
-        ))}
-
-        <div className="scene-text t6" data-stop="6">
+        <div className="scene-text t3" data-stop="3">
           <div className="copy">
-            <h2 className="h-md">Keep it to files you can share.</h2>
-            <p className="lede">Uploads are private to your browser and deleted 30 minutes after you add them. Their text is sent to an AI service to build the search index and write answers.</p>
+            <h2 className="h-md">Find the exact quote. Or explain your own jargon.</h2>
+            <ul className="audiences">
+              {USE_CASES.map((c) => (
+                <li key={c.who}>
+                  <p className="who">{c.who}</p>
+                  <p className="what">{c.text}</p>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        <div className="scene-text t7" data-stop="7">
+        <div className="scene-text t4" data-stop="4">
           <div className="copy">
-            <h2 className="h-lg">Try it with your own files.</h2>
-            <p className="lede">The demo is live. Upload a PDF you know well, ask a question and see the page the answer came from.</p>
+            <h2 className="h-md">Try it with your own files.</h2>
+            <p className="lede">Your files stay private to you and are deleted after 30 minutes. Their text is sent to an AI service to build the index and write answers.</p>
             <DemoLink onNavigate={onNavigate} />
           </div>
         </div>
 
-        {/* the scrolling track: one screen per stop (three for the use-case slides) */}
+        {/* the scrolling track: one screen per stop */}
         <div className="track" aria-hidden="true">
-          <div className="spacer" id="top" />
-          <div className="spacer" />
-          <div className="spacer" />
-          <div className="spacer spacer-3" />
-          <div className="spacer" />
-          <div className="spacer" />
+          {Array.from({ length: STOP_COUNT }, (_, i) => <div className="spacer" id={i === 0 ? "top" : undefined} key={i} />)}
         </div>
       </main>
 

@@ -31,11 +31,6 @@ export function createSignals(points) {
           light += flash + ring * .6;
         });
         return Math.min(1, light);
-      },
-      pulse: function () {
-        var amount = 0;
-        active.forEach(function (event) { if (event.age >= 900) amount += Math.sin(Math.min(1, event.impact / 1100) * Math.PI) * Math.exp(-event.impact / 700); });
-        return Math.min(.06, amount * .025);
       }
     };
   }

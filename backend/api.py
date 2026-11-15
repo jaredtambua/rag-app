@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import config
 import rate_limit
 import storage
+from followup import HistoryRejected, clean_history, rewrite_question
 from models import QuestionRequest
 from rag import AnswerError, generate_answer
 from uploads import UploadRejected, clean_display_name, read_limited
@@ -174,12 +175,22 @@ def ask(
             ),
         )
 
+    try:
+        history = clean_history(body.history)
+    except HistoryRejected as rejection:
+        raise HTTPException(status_code=400, detail=rejection.message)
+
     # Only questions that passed validation use up quota.
     rate_limit.check_ask(visitor, rate_limit.client_ip(request))
 
-    context = retrieve_context(visitor, question)
+    # A follow-up needs a standalone question to find the right pages.
+    standalone = question
+    if history and storage.has_documents(visitor):
+        standalone = rewrite_question(question, history)
 
-    return generate_answer(question, context)
+    context = retrieve_context(visitor, standalone)
+
+    return generate_answer(question, context, history, standalone)
 
 
 @app.post("/upload")

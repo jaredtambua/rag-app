@@ -42,6 +42,7 @@ body {
 }
 ::selection { background: var(--iris); color: var(--white); }
 :focus-visible { outline: 2px solid var(--saffron); outline-offset: 4px; }
+#main:focus { outline: none; }
 h1, h2, h3 { font-weight: 400; margin: 0; text-wrap: balance; letter-spacing: -0.04em; line-height: 1.1; }
 p { margin: 0; }
 a { color: var(--saffron); text-underline-offset: 4px; transition: color var(--t-fast); }
@@ -77,17 +78,10 @@ a:has(> .logo), .logo-link { text-decoration: none; }
 
 .eyebrow { font-size: var(--text-small); font-weight: 600; letter-spacing: 0.025em; text-transform: uppercase; color: var(--saffron); margin-bottom: var(--s3); }
 
-/* views fade in when the route changes; the curtain covers the swap */
-.view { animation: view-in 520ms var(--ease-out) both; }
+/* a page fades in when the route changes and fades out before the next one replaces it */
+.view { animation: view-in 500ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards; transition: opacity 380ms cubic-bezier(0.45, 0, 0.55, 1); }
+.view[data-leaving="true"] { opacity: 0; pointer-events: none; }
 @keyframes view-in { from { opacity: 0; } to { opacity: 1; } }
-.curtain {
-  position: fixed; inset: 0; z-index: 100; background: var(--void);
-  display: grid; place-items: center; opacity: 0; pointer-events: none;
-  transition: opacity 420ms var(--ease-out);
-}
-.curtain[data-on="true"] { opacity: 1; pointer-events: auto; }
-.curtain svg { opacity: .9; animation: curtain-spin 1.4s linear infinite; }
-@keyframes curtain-spin { to { transform: rotate(360deg); } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }

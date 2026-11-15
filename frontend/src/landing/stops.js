@@ -1,6 +1,6 @@
-/* The landing page is one long scroll with eight stops (five scenes; "how it works" has two stops and
-   "who it's for" has three slides). The cloud holds one shape per stop. */
-export const STOP_SHAPES = ["brain", "stack", "ring", "grid", "spiral", "network", "padlock", "sphere"];
+/* The landing page is one long scroll with five stops, one per scene.
+   The cloud holds one shape per stop: hero, knowledge base, citations (ring), use cases (grid), privacy. */
+export const STOP_SHAPES = ["brain", "network", "ring", "grid", "padlock"];
 export const STOP_COUNT = STOP_SHAPES.length;
 
 /* one stop is the height of the first spacer in the scroll track */
