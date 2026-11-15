@@ -3,7 +3,7 @@ import Landing from "./landing/Landing.jsx";
 import Workspace from "./demo/Workspace.jsx";
 import { reducedMotion, useRoute } from "./routing.js";
 
-const FADE_OUT_MS = 200;
+const FADE_OUT_MS = 380; /* keep in step with the .view transition in index.css */
 const TITLES = {
   landing: "Tessel: ask your documents anything",
   demo: "Tessel demo: upload a PDF and ask a question",

@@ -79,7 +79,7 @@ a:has(> .logo), .logo-link { text-decoration: none; }
 .eyebrow { font-size: var(--text-small); font-weight: 600; letter-spacing: 0.025em; text-transform: uppercase; color: var(--saffron); margin-bottom: var(--s3); }
 
 /* a page fades in when the route changes and fades out before the next one replaces it */
-.view { animation: view-in 250ms var(--ease-out) backwards; transition: opacity 200ms ease-out; }
+.view { animation: view-in 500ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards; transition: opacity 380ms cubic-bezier(0.45, 0, 0.55, 1); }
 .view[data-leaving="true"] { opacity: 0; pointer-events: none; }
 @keyframes view-in { from { opacity: 0; } to { opacity: 1; } }
 
