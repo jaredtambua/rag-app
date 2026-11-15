@@ -246,10 +246,88 @@ def says_information_is_absent(answer: str) -> bool:
     return False
 
 
+def _normalise(text: str) -> str:
+    return " ".join(text.split())
+
+
+_ELLIPSIS = re.compile(r"\.{3,}|…")
+_MIN_PIECE_CHARS = 8
+
+
+def _evidence_by_source_and_page(context_blocks):
+    """(source, page) -> normalised chunk texts, in the raw and escaped form
+    (the model saw the escaped form and may copy from it)."""
+    evidence = {}
+    for block in context_blocks:
+        for chunk in block.chunks:
+            texts = evidence.setdefault((block.source, chunk.page), [])
+            texts.append(_normalise(chunk.text))
+            texts.append(_normalise(_escape(chunk.text)))
+    return evidence
+
+
+def _verified_quote(quote: str, texts) -> str | None:
+    """The quote if it appears verbatim (whitespace aside) in one of texts.
+
+    A quote shortened with "..." is split on the ellipsis; only the pieces
+    that appear verbatim are kept and they are joined with " ... ".
+    """
+    quote = _normalise(quote)
+    if not quote:
+        return None
+
+    if not _ELLIPSIS.search(quote):
+        return quote if any(quote in text for text in texts) else None
+
+    pieces = [_normalise(p) for p in _ELLIPSIS.split(quote)]
+    kept = [
+        p for p in pieces
+        if len(p) >= _MIN_PIECE_CHARS and any(p in text for text in texts)
+    ]
+    return " ... ".join(kept) if kept else None
+
+
+def check_citations(citations, context_blocks):
+    """
+    Keep only citations whose quote really is in the evidence that was sent.
+
+    The quote must appear in the cited source on the cited page. If it only
+    appears on another page of that same source, the page is corrected to the
+    page where it was found. Citations with no matching text are dropped; the
+    answer itself is never changed.
+    """
+    evidence = _evidence_by_source_and_page(context_blocks)
+    checked = []
+
+    for citation in citations:
+        if not isinstance(citation, dict) or not isinstance(citation.get("quote"), str):
+            continue
+
+        source = citation.get("source")
+        page = citation.get("page")
+
+        pages = [page] + [p for (s, p) in evidence if s == source and p != page]
+
+        for candidate_page in pages:
+            texts = evidence.get((source, candidate_page))
+            if not texts:
+                continue
+            quote = _verified_quote(citation["quote"], texts)
+            if quote is not None:
+                checked.append({**citation, "page": candidate_page, "quote": quote})
+                break
+
+    return checked
+
+
 def clean_citations(parsed: dict, context_blocks) -> dict:
-    """Apply the citation checks to a parsed model reply."""
+    """Apply the citation checks to a parsed model reply: an answer that says
+    the information is absent loses its citations; otherwise each quote is
+    checked against the evidence the model was actually given."""
     if says_information_is_absent(parsed["answer"]):
         parsed["citations"] = []
+    else:
+        parsed["citations"] = check_citations(parsed["citations"], context_blocks)
     return parsed
 
 

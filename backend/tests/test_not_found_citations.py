@@ -5,9 +5,11 @@ import json
 import pytest
 
 import rag
+from models import ContextBlock, RetrievedChunk
 from conftest import MARKER, StubClient, ask, uploaded_visitor
 
-CITE = [{"source": "z.pdf", "page": 1, "quote": "something"}]
+CITE = [{"source": "z.pdf", "page": 1, "quote": "something relevant"}]
+BLOCKS = [ContextBlock(source="z.pdf", distance=0, chunks=[RetrievedChunk(page=1, chunk_index=0, text="here is something relevant")])]
 
 
 @pytest.mark.parametrize(
@@ -43,7 +45,7 @@ def test_absent_answers_lose_their_citations(answer):
     ],
 )
 def test_real_answers_keep_their_citations(answer):
-    parsed = rag.clean_citations({"answer": answer, "citations": list(CITE)}, [])
+    parsed = rag.clean_citations({"answer": answer, "citations": list(CITE)}, BLOCKS)
     assert parsed["citations"] == CITE
 
 

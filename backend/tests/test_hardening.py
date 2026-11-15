@@ -50,7 +50,7 @@ def test_model_failure_gives_friendly_error_without_internals(client, stubbed):
 
 def test_good_model_output_and_code_fences_still_work(client, stubbed):
     v = uploaded_visitor(client)
-    good = {"answer": "A zebra.", "citations": [{"source": "z.pdf", "page": 1, "quote": "q"}]}
+    good = {"answer": "A zebra.", "citations": [{"source": "z.pdf", "page": 1, "quote": f"The {MARKER} is a striped animal."}]}
     stubbed(StubClient(reply="```json\n" + json.dumps(good) + "\n```"))
     response = ask(client, v)
     assert response.status_code == 200
