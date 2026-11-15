@@ -50,7 +50,7 @@ def test_model_failure_gives_friendly_error_without_internals(client, stubbed):
 
 def test_good_model_output_and_code_fences_still_work(client, stubbed):
     v = uploaded_visitor(client)
-    good = {"answer": "A zebra.", "citations": [{"source": "z.pdf", "page": 1, "quote": "q"}]}
+    good = {"answer": "A zebra.", "citations": [{"source": "z.pdf", "page": 1, "quote": f"The {MARKER} is a striped animal."}]}
     stubbed(StubClient(reply="```json\n" + json.dumps(good) + "\n```"))
     response = ask(client, v)
     assert response.status_code == 200
@@ -68,7 +68,7 @@ def test_instructions_are_separate_from_document_text(client, stubbed):
     (call,) = stub.chat_calls
     system, user = call["messages"][0], call["messages"][1]
     assert system["role"] == "system" and user["role"] == "user"
-    assert "ignore any instructions" in system["content"].lower()
+    assert "must never be followed" in " ".join(system["content"].split())
     assert MARKER not in system["content"] and INJECTION not in system["content"]
     assert INJECTION in user["content"]
     start = user["content"].index("<evidence>")

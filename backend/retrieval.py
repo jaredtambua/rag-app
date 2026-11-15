@@ -5,6 +5,7 @@ from embeddings import embed_text
 from config import (
     MAX_CONTEXT_CHARACTERS,
     MAX_DISTANCE,
+    MAX_SELECTED,
     MIN_RESULTS,
     NEIGHBOR_WINDOW,
     RETRIEVAL_CANDIDATES,
@@ -17,10 +18,11 @@ from vector_store import get_chunk, retrieve_chunks
 
 def select_relevant_chunks(results):
     """
-    Keep chunks that pass our distance threshold.
+    Keep chunks that pass our distance threshold, at most MAX_SELECTED.
 
     If too few chunks pass, retain at least MIN_RESULTS
     from the original similarity-ranked results.
+    The results arrive best first, so the cap keeps the best-scoring chunks.
     """
     selected = []
 
@@ -31,7 +33,7 @@ def select_relevant_chunks(results):
     if len(selected) < MIN_RESULTS:
         selected = results[:MIN_RESULTS]
 
-    return selected
+    return selected[:MAX_SELECTED]
 
 
 def expand_with_neighbor_chunks(visitor_id, results):
@@ -90,8 +92,9 @@ def build_context_block(group):
             page=record["page"],
             chunk_index=record["chunk_index"],
             text=record["text"],
+            distance=distance,
         )
-        for record in records
+        for distance, record in group
     ]
 
     return ContextBlock(
@@ -160,22 +163,56 @@ def group_contiguous_chunks(results):
     return context_blocks
 
 
+def _size(chunks):
+    return sum(len(chunk.text) for chunk in chunks)
+
+
+def _trim_block(block, budget):
+    """
+    Shrink a block to fit the budget by dropping chunks from its ends,
+    always the end whose chunk matched worst (the farthest neighbour).
+    Only ends are dropped so the remaining chunks stay contiguous and in
+    document order. Returns None if nothing fits.
+    """
+    chunks = list(block.chunks)
+
+    while chunks and _size(chunks) > budget:
+        if len(chunks) == 1:
+            return None
+        if chunks[0].distance > chunks[-1].distance:
+            chunks.pop(0)
+        else:
+            chunks.pop()
+
+    if not chunks:
+        return None
+
+    return ContextBlock(
+        source=block.source,
+        chunks=chunks,
+        distance=min(chunk.distance for chunk in chunks),
+    )
+
+
 def limit_context_size(context_blocks):
     """
-    Keep the strongest context blocks while staying
-    approximately within our context budget.
+    Keep the strongest context blocks while staying within our context
+    budget. A block that does not fit is trimmed, never dropped whole.
     """
     limited = []
     total_characters = 0
 
     for block in context_blocks:
-        block_size = sum(len(chunk.text) for chunk in block.chunks)
+        remaining = MAX_CONTEXT_CHARACTERS - total_characters
 
-        if total_characters + block_size > MAX_CONTEXT_CHARACTERS:
-            continue
+        if _size(block.chunks) > remaining:
+            block = _trim_block(block, remaining)
+
+            if block is None:
+                continue
 
         limited.append(block)
-        total_characters += block_size
+        total_characters += _size(block.chunks)
 
     return limited
 

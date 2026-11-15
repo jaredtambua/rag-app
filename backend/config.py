@@ -177,27 +177,34 @@ CHUNK_OVERLAP = 150
 # Retrieval
 # ---------------------------------------------------------
 
-# Number of candidate chunks to initially retrieve from Chroma.
+# Number of candidate chunks to initially retrieve from Chroma (one query
+# embedding, so a two-part question mostly surfaces chunks for one part).
+# A visitor has at most 3 files of 30 pages, so 40 is cheap.
 #
 # Previously we retrieved only TOP_K = 3. We now deliberately
 # retrieve a larger candidate set because later stages of the
 # retrieval pipeline will filter and process these results.
-RETRIEVAL_CANDIDATES = 20
+RETRIEVAL_CANDIDATES = 40
 
 
-# Maximum Chroma distance normally considered relevant.
-#
-# Lower distance = greater similarity.
-#
-# NOTE:
-# This is an initial heuristic rather than a universally correct
-# value. We should inspect real retrieval results and tune it later.
-MAX_DISTANCE = 1.0
+# Largest Chroma distance we still keep. The collection uses Chroma's default
+# metric (squared L2 on unit-length embeddings), whose range is 0 to 4. Useful
+# chunks score about 0.9 to 1.6 on real documents, so any cut-off near 1.0
+# threw almost everything away. 4.0 can never filter anything: the
+# MAX_SELECTED cap and the character limit choose what the model sees, and the
+# prompt makes it refuse when the answer is not there.
+MAX_DISTANCE = 4.0
 
 
 # If fewer than this many chunks pass MAX_DISTANCE,
 # retain at least this many of the best candidates.
 MIN_RESULTS = 3
+
+
+# Never keep more than this many of the best chunks before neighbours are
+# added. On a small document nearly every chunk is "close", and without a cap
+# the whole document would be sent.
+MAX_SELECTED = 30
 
 
 # Number of chunks immediately before and after a selected
@@ -216,5 +223,6 @@ NEIGHBOR_WINDOW = 1
 # evidence that we will provide to the generation layer.
 #
 # Context blocks are considered in relevance order until
-# this budget is reached.
-MAX_CONTEXT_CHARACTERS = 12_000
+# this budget is reached. 30,000 characters is roughly 8,000 tokens; even a
+# 30-page document stays well under the model's limit and costs little.
+MAX_CONTEXT_CHARACTERS = 30_000
