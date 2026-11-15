@@ -203,7 +203,7 @@ MIN_RESULTS = 3
 # Never keep more than this many of the best chunks before neighbours are
 # added. On a small document nearly every chunk is "close", and without a cap
 # the whole document would be sent.
-MAX_SELECTED = 10
+MAX_SELECTED = 20
 
 
 # Number of chunks immediately before and after a selected

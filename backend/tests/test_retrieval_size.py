@@ -20,7 +20,7 @@ def small_document(count=60):
 
 
 def test_selection_is_capped_to_the_best_chunks():
-    results = [(0.5 + i * 0.01, record(i)) for i in range(17)]  # all under the distance limit
+    results = [(0.5 + i * 0.01, record(i)) for i in range(MAX_SELECTED + 7)]  # all under the distance limit
     selected = retrieval.select_relevant_chunks(results)
     assert len(selected) == MAX_SELECTED
     assert [r["chunk_index"] for _, r in selected] == list(range(MAX_SELECTED))

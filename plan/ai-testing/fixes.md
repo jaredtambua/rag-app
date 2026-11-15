@@ -37,3 +37,6 @@ Source diagnosis: p2b.md (scratchpad aitest results). Backend tests: `.venv\Scri
 ### 7. Wording leak (SYSTEM_PROMPT)
 - Fix: Answer style now forbids mentioning evidence, sections provided, chunks, excerpts or retrieval; the model says "the uploaded documents".
 - Retest: summary questions; no answer should say "provided evidence" or "provided sections".
+
+### 8. Cap raised again
+MAX_SELECTED is now 20 (p2d: broad summaries were limited by the 10-chunk cap); the 30,000 character limit and trimming still protect against oversize.
