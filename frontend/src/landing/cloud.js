@@ -101,6 +101,8 @@ export function startCloud(canvas, ambientCanvas) {
     const lerp = (k) => ra[k] + (rb[k] - ra[k]) * m;
     const side = Math.min(lerp(2) * Math.min(W, H), lerp(3) * W, lerp(4) * H);
     if (t0 === null) t0 = now;
+    /* the small idle drift fades out over the first and last 8% of a transition, so it never switches on or off with a jump */
+    const nearStop = clamp(Math.min(m, 1 - m) / .08, 0, 1), drift = 1 - nearStop * nearStop * (3 - 2 * nearStop);
     const A = shapes[i], B = shapes[i + 1], D = side * 2.4, Zr = side * .3;
     /* where the two shapes sit and where the screen centre is, measured in the current frame (units of the current size) */
     const sa = rectSide(ra) / side, sb = rectSide(rb) / side;
@@ -131,7 +133,7 @@ export function startCloud(canvas, ambientCanvas) {
       const brightness = brainSignals.light(x, y, z) * brainWeight;
       let X = x * side, Y = y * side;
       const Z = z * side;
-      if (!still && (m === 0 || m === 1)) { X += Math.sin(now / 1100 + q.ph) * 2; Y += Math.cos(now / 1300 + q.ph) * 2; }
+      if (!still && drift > 0) { X += Math.sin(now / 1100 + q.ph) * 2 * drift; Y += Math.cos(now / 1300 + q.ph) * 2 * drift; }
       const x1 = X * cs + Z * sn, z1 = -X * sn + Z * cs, y1 = Y * ct - z1 * st, z2 = Y * st + z1 * ct;
       const fz = D / (D - z2), depth = clamp((z2 + Zr) / (2 * Zr), 0, 1);
       if (brightness > .08) lit.push([cx + x1 * fz, cy + y1 * fz, q.s * fz * (1 + brightness * .7), q.r, brightness]);

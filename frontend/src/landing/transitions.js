@@ -40,10 +40,10 @@ export function position(edge, t, ax, ay, az, bx, by, bz, particle, out, frame) 
         z += envelope * particle.w[2] * .38;
         spin = envelope * Math.sin(angle) * 1.5;
         break;
-      case 1: // Network to ring: one prevailing wind curls the strands into an orbit.
-        angle = phase * .2 + u * Math.PI * 1.5;
-        x += envelope * (.75 + Math.cos(angle) * .45);
-        y += envelope * (Math.sin(angle + ay * 2) * .5 - .16);
+      case 1: // Network to ring: the swarm swirls around the straight path between the two shapes (the swirl averages out to nothing, so the mass itself travels directly).
+        angle = phase + u * Math.PI * 1.5;
+        x += envelope * Math.cos(angle) * .42;
+        y += envelope * Math.sin(angle + ay * 2) * .32;
         z += envelope * Math.sin(angle + phase) * .35;
         spin = envelope * (u * 4 + phase * .2);
         break;
